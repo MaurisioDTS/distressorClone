@@ -1,0 +1,82 @@
+# =========================
+# C++ build artifacts
+# =========================
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.manifest
+
+# Dependency / intermediate files
+*.d
+*.dep
+*.rsp
+*.tlog
+*.lastbuildstate
+*.cache
+
+# Precompiled headers
+*.gch
+*.pch
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Makefile
+install_manifest.txt
+_deps/
+
+# Common build output directories
+build/
+bin/
+obj/
+out/
+dist/
+
+# JUCE / Projucer generated user files
+*.jucer.user
+
+# Keep generated project files in repo for easy onboarding,
+# but ignore machine-specific build outputs inside them.
+Builds/**/.vs/
+Builds/**/ipch/
+Builds/**/x64/
+Builds/**/Win32/
+Builds/**/Debug/
+Builds/**/Release/
+
+# Ignore generated JUCE intermediate artefacts but keep AppConfig/includes.
+JuceLibraryCode/BinaryData.*
+JuceLibraryCode/*.o
+JuceLibraryCode/*.obj
+
+# Visual Studio / VSCode / JetBrains
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+.idea/
+
+# Logs / temp
+*.log
+*.tmp
+*.temp
+*.swp
+*~
