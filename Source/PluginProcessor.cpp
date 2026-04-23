@@ -56,10 +56,10 @@ void DistressorCloneAudioProcessor::prepareToPlay (double newSampleRate, int sam
 {
     this->sampleRate = sampleRate;
 
-    // Reservamos espacio para el número máximo de canales
+    // Reservamos espacio para el nï¿½mero mï¿½ximo de canales
     envelopeDb.assign(getTotalNumOutputChannels(), 0.0f);
 
-    // Calcular coeficientes a partir de los parámetros iniciales
+    // Calcular coeficientes a partir de los parï¿½metros iniciales
     float atkMs = attack->get();
     float relMs = release->get();
 
@@ -106,7 +106,7 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     //float inputGainDb = parameters.getRawParameterValue("ratio")->load();
     float inputGainDb = inputGain->get();
     int mode = compModeParam->getIndex(); //  0=Unlink, 1=Link, 2=Mid/Side. 
-    //  (no me gustan los numeros mágicos pero hay que sacar esto adelante)
+    //  (no me gustan los numeros mï¿½gicos pero hay que sacar esto adelante)
 
     float inputGainLin = juce::Decibels::decibelsToGain(inputGainDb);
     float outGain = juce::Decibels::decibelsToGain(outputGain->get());
@@ -131,12 +131,12 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         if (mode == 1) {
             for (int sample = 0; sample < numSamples; ++sample)
             {
-                // detector común: max entre todos los canales
+                // detector comï¿½n: max entre todos los canales
                 float maxIn = 0.0f;
                 for (int ch = 0; ch < numChannels; ++ch)
                     maxIn = std::max(maxIn, std::fabs(buffer.getSample(ch, sample)));
 
-                // aplicar reducción común
+                // aplicar reducciï¿½n comï¿½n
                 float gain = LinkComp(maxIn);
 
                 for (int ch = 0; ch < numChannels; ++ch)
@@ -172,7 +172,7 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
                 for (int ch = 0; ch < numChannels; ++ch)
                 {
                     float in = buffer.getSample(ch, sample);
-                    float out = postCompFxChain(Compressor(in, ch)); // aqui están los efectos en serie
+                    float out = postCompFxChain(Compressor(in, ch)); // aqui estï¿½n los efectos en serie
                     buffer.setSample(ch, sample, out);
                 }
             }
@@ -188,12 +188,12 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
 
 float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, float threshDb, float ratio)
 {
-    // parámetros del knee mapping
+    // parï¿½metros del knee mapping
     const float maxRatio = 20.0f;
     const float minRatioForMaxKnee = 2.0f;
     const float maxKneeDb = 16.0f;
 
-    // calcular knee en dB según ratio
+    // calcular knee en dB segï¿½n ratio
     float kneeDb;
     if (ratio <= minRatioForMaxKnee)
         kneeDb = maxKneeDb;
@@ -202,7 +202,7 @@ float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, fl
     else
         kneeDb = maxKneeDb * ((maxRatio - ratio) / (maxRatio - minRatioForMaxKnee));
 
-    // separación entre nivel y threshold
+    // separaciï¿½n entre nivel y threshold
     float x = inputLevelDb - threshDb; // x en dB
     float gainReductionDb = 0.0f;
 
@@ -238,7 +238,7 @@ float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, fl
             gainReductionDb = (kRatioTerm * a * a) / (2.0f * kneeDb);
         }
     }
-    // gainReductionDb es <= 0 (0 = sin reducción). sumamos makeup más adelante si corresponde.
+    // gainReductionDb es <= 0 (0 = sin reducciï¿½n). sumamos makeup mï¿½s adelante si corresponde.
     return gainReductionDb; // normalmente negativo o 0
 }
 
@@ -252,7 +252,7 @@ float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
     float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(inputSample) + 1.0e-10f);
     //float inputLevelDbLink = juce::Decibels::gainToDecibels(inputSample + 1.0e-10f);
 
-    // 2. La compresión en si misma.
+    // 2. La compresiï¿½n en si misma.
         
     if (inputLevelDb > thresh)
     {
@@ -266,7 +266,7 @@ float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
     else
         envelopeDb[channel] = releaseCoeff * (envelopeDb[channel] - gainReductionDb) + gainReductionDb;
 
-    // (envíamos el GR al VUmetro)
+    // (envï¿½amos el GR al VUmetro)
     if (channel == 0)  // usar el primer canal como referencia
         this->gainReductionDb.store(-envelopeDb[channel]);
 
@@ -292,7 +292,7 @@ float DistressorCloneAudioProcessor::LinkComp(float inputSample)
         //gainReductionDb = (thresh + (inputLevelDb - thresh) / compRatio) - inputLevelDb;
         gainReductionDb = computeGainFromLevel(inputLevelDb, thresh, ratio);
 
-    // suavizado común
+    // suavizado comï¿½n
     if (gainReductionDb < linkedEnvelopeDb)
         linkedEnvelopeDb = attackCoeff * (linkedEnvelopeDb - gainReductionDb) + gainReductionDb;
     else
@@ -315,24 +315,24 @@ float DistressorCloneAudioProcessor::thDistortion(float inputSample)
     case 0: //  Normal (Clean / Soft Clip)
     {
         // Soft clipper muy suave, casi transparente
-        // Evita overs sin añadir volumen extra
+        // Evita overs sin aï¿½adir volumen extra
         const float ceiling = 0.8f;
         if (x > ceiling)      return ceiling - (ceiling - x) * 0.01f;
         else if (x < -ceiling) return -ceiling - (x + ceiling) * 0.01f;
         else                  return x;
     }
 
-    case 1: //  Dist 2 (Tube-like, armónicos pares)
+    case 1: //  Dist 2 (Tube-like, armï¿½nicos pares)
     {
-        // Saturación tipo válvula: tanh + cuadrática (2º armónico)
+        // Saturaciï¿½n tipo vï¿½lvula: tanh + cuadrï¿½tica (2ï¿½ armï¿½nico)
         float nonlinear = std::tanh(1.3f * x);
-        nonlinear += 0.35f * x * x; // énfasis 2º armónico
+        nonlinear += 0.35f * x * x; // ï¿½nfasis 2ï¿½ armï¿½nico
         return juce::jlimit(-1.0f, 1.0f, nonlinear);
     }
 
-    case 2: //  Dist 3 (Tape-like, armónicos impares)
+    case 2: //  Dist 3 (Tape-like, armï¿½nicos impares)
     {
-        // Saturación de cinta: compresión + armónicos impares
+        // Saturaciï¿½n de cinta: compresiï¿½n + armï¿½nicos impares
         float cubic = x - 0.7f * (std::pow(x, 3) - 0.35f * std::pow(x, 2));
         float nonlinear = std::tanh(1.7f * cubic);
         return juce::jlimit(-1.0f, 1.0f, nonlinear);
@@ -358,12 +358,13 @@ float DistressorCloneAudioProcessor::postCompFxChain(float inputSample)
 //==============================================================================
 juce::AudioProcessorEditor* DistressorCloneAudioProcessor::createEditor()
 {
-    return new DistressorCloneAudioProcessorEditor(*this);
+    // sin editor, el DAW muestra sus sliders.
+    return nullptr;
 }
 
 bool DistressorCloneAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return false;
 }
 
 //==============================================================================
@@ -395,15 +396,38 @@ double DistressorCloneAudioProcessor::getTailLengthSeconds() const
 //==============================================================================
 void DistressorCloneAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    // serializamos todos los parametros registrados con addParameter en un XML.
+    // usamos el paramID (AudioProcessorParameterWithID) como nombre del atributo.
+    juce::XmlElement xml("DistressorCloneState");
+
+    for (auto* param : getParameters())
+    {
+        if (auto* p = dynamic_cast<juce::AudioProcessorParameterWithID*>(param))
+            xml.setAttribute(p->paramID, (double)p->getValue()); // valor normalizado 0..1
+    }
+
+    copyXmlToBinary(xml, destData);
 }
 
 void DistressorCloneAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    if (auto xml = getXmlFromBinary(data, sizeInBytes))
+    {
+        if (!xml->hasTagName("DistressorCloneState"))
+            return;
+
+        for (auto* param : getParameters())
+        {
+            if (auto* p = dynamic_cast<juce::AudioProcessorParameterWithID*>(param))
+            {
+                if (xml->hasAttribute(p->paramID))
+                {
+                    const float normalised = (float)xml->getDoubleAttribute(p->paramID, p->getValue());
+                    p->setValueNotifyingHost(juce::jlimit(0.0f, 1.0f, normalised));
+                }
+            }
+        }
+    }
 }
 
 //==============================================================================

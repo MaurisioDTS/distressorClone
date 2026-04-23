@@ -30,6 +30,15 @@ public:
     int getDistMode() { return distModeParam->getIndex(); }
     int getCompMode() { return compModeParam->getIndex(); }
 
+    juce::RangedAudioParameter* getParamByID(const juce::String& id) const
+    {
+        for (auto* p : getParameters())
+            if (auto* withID = dynamic_cast<juce::AudioProcessorParameterWithID*>(p))
+                if (withID->paramID == id)
+                    return dynamic_cast<juce::RangedAudioParameter*>(p);
+        return nullptr;
+    }
+
     //==============================================================================
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -66,14 +75,14 @@ public:
 
 private:
 
-    // Parámetros del compresor
+    // Parï¿½metros del compresor
     std::vector<float> envelopeDb;   // detector de envolvente por canal (en dB)
 
     float attackCoeff = 0.0f;
     float releaseCoeff = 0.0f;
 
     juce::dsp::Oversampling<float> oversampling{
-    2, // número de etapas (x2, x4, etc). Aquí x4 = 2^2
+    2, // nï¿½mero de etapas (x2, x4, etc). Aquï¿½ x4 = 2^2
     2, // factor de oversampling (2 = polyphase IIR, mejor calidad)
     juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR,
     true // mantener DC
@@ -92,7 +101,7 @@ private:
     juce::AudioParameterChoice* compModeParam;
     juce::AudioParameterChoice* distModeParam;
 
-    float linkedEnvelopeDb = 0.0f;  // detector común para modo "Link"
+    float linkedEnvelopeDb = 0.0f;  // detector comï¿½n para modo "Link"
     float midEnvDb = 0.0f;          // detector Mid
     float sideEnvDb = 0.0f;         // detector Side
 

@@ -11,8 +11,10 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+// este proyecto no usa AudioProcessorValueTreeState: enlazamos sliders/botones
+// directamente contra los RangedAudioParameter registrados con addParameter.
+using SliderAttachment = juce::SliderParameterAttachment;
+using ButtonAttachment = juce::ButtonParameterAttachment;
 
 class GainReductionMeter : public juce::Component, private juce::Timer
 {
@@ -27,8 +29,8 @@ public:
         auto bounds = getLocalBounds().toFloat();
         g.fillAll(juce::Colours::black);
 
-        float gr = gainReduction.load(); // en dB positivos (0 = nada, 12 = mucha reducción)
-        float maxReduction = 24.0f;      // escala máxima en dB
+        float gr = gainReduction.load(); // en dB positivos (0 = nada, 12 = mucha reducciï¿½n)
+        float maxReduction = 24.0f;      // escala mï¿½xima en dB
 
         float proportion = juce::jlimit(0.0f, 1.0f, gr / maxReduction);
 

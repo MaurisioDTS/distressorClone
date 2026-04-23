@@ -32,10 +32,14 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
     //    audioProcessor.getParameters(), "release", releaseSlider);
     //addAndMakeVisible(releaseSlider);
 
-    // Input
-    inputGainAttachment = new SliderAttachment (
-        audioProcessor.getParameters(), "inputGainParam", inputGainSlider);
-    addAndMakeVisible(inputGainSlider);
+    // Input Gain
+    // enlazamos el slider directamente con el RangedAudioParameter (sin APVTS).
+    if (auto* inputGainParam = audioProcessor.getParamByID("inputGain"))
+    {
+        inputGainAttachment = std::make_unique<SliderAttachment>(
+            *inputGainParam, inputGainSlider, nullptr);
+        addAndMakeVisible(inputGainSlider);
+    }
 
     ////// Output
     //outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
