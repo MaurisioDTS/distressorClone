@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-    This file contains the basic framework code for a JUCE plugin editor.
+    Editor del plugin basado en juce::WebBrowserComponent (WebView UI).
+    El DSP vive en PluginProcessor; la UI est� en Resources/ (HTML/CSS/JS)
+    y se sirve desde BinaryData a trav�s de un ResourceProvider.
 
   ==============================================================================
 */
@@ -11,100 +13,46 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-// este proyecto no usa AudioProcessorValueTreeState: enlazamos sliders/botones
-// directamente contra los RangedAudioParameter registrados con addParameter.
-using SliderAttachment = juce::SliderParameterAttachment;
-using ButtonAttachment = juce::ButtonParameterAttachment;
-
-class GainReductionMeter : public juce::Component, private juce::Timer
-{
-public:
-    GainReductionMeter(std::atomic<float>& grValue) : gainReduction(grValue)
-    {
-        startTimerHz(30); // refrescar 30 fps
-    }
-
-    void paint(juce::Graphics& g) override
-    {
-        auto bounds = getLocalBounds().toFloat();
-        g.fillAll(juce::Colours::black);
-
-        float gr = gainReduction.load(); // en dB positivos (0 = nada, 12 = mucha reducci�n)
-        float maxReduction = 24.0f;      // escala m�xima en dB
-
-        float proportion = juce::jlimit(0.0f, 1.0f, gr / maxReduction);
-
-        auto barHeight = bounds.getHeight() * proportion;
-        g.setColour(juce::Colours::red);
-        g.fillRect(bounds.removeFromBottom((int)barHeight));
-    }
-
-private:
-    void timerCallback() override { repaint(); }
-
-    std::atomic<float>& gainReduction;
-};
+using SliderAttachment = juce::WebSliderParameterAttachment;
+using ComboAttachment  = juce::WebComboBoxParameterAttachment;
 
 //==============================================================================
-/**
-*/
-class DistressorCloneAudioProcessorEditor  : public juce::AudioProcessorEditor
+class DistressorCloneAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                             private juce::Timer
 {
 public:
     DistressorCloneAudioProcessorEditor (DistressorCloneAudioProcessor&);
     ~DistressorCloneAudioProcessorEditor() override;
 
-    //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    void timerCallback() override;
+
+    std::optional<juce::WebBrowserComponent::Resource> provideResource (const juce::String& url);
+
     DistressorCloneAudioProcessor& audioProcessor;
 
+    // Relays expuestos a la UI web (deben construirse antes que la WebBrowserComponent).
+    juce::WebSliderRelay   inputGainRelay  { "inputGain"  };
+    juce::WebSliderRelay   outputGainRelay { "outputGain" };
+    juce::WebSliderRelay   attackRelay     { "attack"     };
+    juce::WebSliderRelay   releaseRelay    { "release"    };
+    juce::WebSliderRelay   ratioRelay      { "ratio"      };
+    juce::WebComboBoxRelay modeRelay       { "mode"       };
+    juce::WebComboBoxRelay distModeRelay   { "distortionMode" };
 
-    // Knobs (sliders)
-    //juce::Slider thresholdSlider;
-    //juce::Slider ratioSlider;
-    //juce::Slider attackSlider;
-    //juce::Slider releaseSlider;
-    ////juce::Slider makeupSlider;
-    //juce::Slider inputGainSlider;
-    //juce::Slider outputGainSlider;
+    juce::WebBrowserComponent webView;
 
-    // Labels opcionales
-    //juce::Label thresholdLabel, ratioLabel, attackLabel, releaseLabel, outputGainLabel;
-
-    //juce::ToggleButton deltaButton{ "delta" };
-
-
-    std::unique_ptr<GainReductionMeter> grMeter;
-
-    juce::Slider ratioSlider;
-    std::unique_ptr<SliderAttachment> ratioAttachment;
-
-    juce::Slider attackSlider;
-    std::unique_ptr<SliderAttachment> attackAttachment;
-
-    juce::Slider releaseSlider;
-    std::unique_ptr<SliderAttachment> releaseAttachment;
-
-    juce::Slider inputGainSlider;
-    std::unique_ptr<SliderAttachment> inputGainAttachment;
-
-    juce::Slider outputGainSlider;
-    std::unique_ptr<SliderAttachment> outputAttachment;
-
-    //juce::TextButton distorsionModeButton;
-    //std::unique_ptr<ButtonAttachment> distorsionModeAttachment;
-
-    // funciones
-
-    void handleDistModeButton() {  }
-    void handleCompModeButton() {  }
+    // Attachments para sincronizar los relays con los par�metros del processor.
+    std::unique_ptr<SliderAttachment> inputGainAttach;
+    std::unique_ptr<SliderAttachment> outputGainAttach;
+    std::unique_ptr<SliderAttachment> attackAttach;
+    std::unique_ptr<SliderAttachment> releaseAttach;
+    std::unique_ptr<SliderAttachment> ratioAttach;
+    std::unique_ptr<ComboAttachment>  modeAttach;
+    std::unique_ptr<ComboAttachment>  distModeAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DistressorCloneAudioProcessorEditor)
 };
-
-

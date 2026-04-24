@@ -54,7 +54,7 @@ DistressorCloneAudioProcessor::~DistressorCloneAudioProcessor()
 //==============================================================================
 void DistressorCloneAudioProcessor::prepareToPlay (double newSampleRate, int samplesPerBlock)
 {
-    this->sampleRate = sampleRate;
+    this->sampleRate = (float) newSampleRate;
 
     // Reservamos espacio para el n�mero m�ximo de canales
     envelopeDb.assign(getTotalNumOutputChannels(), 0.0f);
@@ -112,6 +112,14 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     float outGain = juce::Decibels::decibelsToGain(outputGain->get());
 
     buffer.applyGain(inputGainLin);
+
+    // Capturamos el peak de entrada (post input gain) para el meter de la UI.
+    {
+        const float peakL = numChannels > 0 ? buffer.getMagnitude(0, 0, numSamples) : 0.0f;
+        const float peakR = numChannels > 1 ? buffer.getMagnitude(1, 0, numSamples) : peakL;
+        inputPeakDbL.store(juce::Decibels::gainToDecibels(peakL, -100.0f));
+        inputPeakDbR.store(juce::Decibels::gainToDecibels(peakR, -100.0f));
+    }
 
     // TODO arreglar esta condicional
     if (false)
@@ -184,6 +192,14 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     //  UNICA Y EXCLUSIVAMENTE 1 VEZ, SINO VAS A PICAR LA MIXER A +INF.
     //      never forget!
     buffer.applyGain(outGain);
+
+    // Peak de salida para el meter (despu�s del out gain).
+    {
+        const float peakL = numChannels > 0 ? buffer.getMagnitude(0, 0, numSamples) : 0.0f;
+        const float peakR = numChannels > 1 ? buffer.getMagnitude(1, 0, numSamples) : peakL;
+        outputPeakDbL.store(juce::Decibels::gainToDecibels(peakL, -100.0f));
+        outputPeakDbR.store(juce::Decibels::gainToDecibels(peakR, -100.0f));
+    }
 }
 
 float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, float threshDb, float ratio)
@@ -358,13 +374,12 @@ float DistressorCloneAudioProcessor::postCompFxChain(float inputSample)
 //==============================================================================
 juce::AudioProcessorEditor* DistressorCloneAudioProcessor::createEditor()
 {
-    // sin editor, el DAW muestra sus sliders.
-    return nullptr;
+    return new DistressorCloneAudioProcessorEditor(*this);
 }
 
 bool DistressorCloneAudioProcessor::hasEditor() const
 {
-    return false;
+    return true;
 }
 
 //==============================================================================

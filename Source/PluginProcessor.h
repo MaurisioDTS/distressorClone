@@ -27,6 +27,13 @@ public:
 
     std::atomic<float> gainReductionDb{ 0.0f };
 
+    // Peaks por bloque para los VU meters de la UI. En dBFS (-inf..0, aprox).
+    // Se actualizan al final de cada processBlock y se leen desde el editor.
+    std::atomic<float> inputPeakDbL  { -100.0f };
+    std::atomic<float> inputPeakDbR  { -100.0f };
+    std::atomic<float> outputPeakDbL { -100.0f };
+    std::atomic<float> outputPeakDbR { -100.0f };
+
     int getDistMode() { return distModeParam->getIndex(); }
     int getCompMode() { return compModeParam->getIndex(); }
 
