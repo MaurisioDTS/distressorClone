@@ -12,6 +12,13 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="aO4I7F" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <GROUP id="{F9C1A0E1-1E0C-4E0F-B1C0-000000000001}" name="Resources">
+      <FILE id="rEsIdx" name="index.html" compile="0" resource="1" file="Resources/index.html"/>
+      <FILE id="rEsCss" name="styles.css" compile="0" resource="1" file="Resources/styles.css"/>
+      <FILE id="rEsMai" name="main.js"   compile="0" resource="1" file="Resources/main.js"/>
+      <FILE id="rEsJcI" name="index.js"  compile="0" resource="1" file="Resources/juce/index.js"/>
+      <FILE id="rEsJcC" name="check_native_interop.js" compile="0" resource="1" file="Resources/juce/check_native_interop.js"/>
+    </GROUP>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -29,7 +36,8 @@
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"
+               JUCE_WEB_BROWSER="1" JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING="1"/>
   <EXPORTFORMATS>
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
