@@ -5,6 +5,9 @@
     <Filter Include="distressorClone\Source">
       <UniqueIdentifier>{4DEEF1FB-7CCC-8343-15DF-D68085863859}</UniqueIdentifier>
     </Filter>
+    <Filter Include="distressorClone\Resources">
+      <UniqueIdentifier>{F7EAFEAD-3B31-53CD-4269-E51D05564856}</UniqueIdentifier>
+    </Filter>
     <Filter Include="distressorClone">
       <UniqueIdentifier>{BA656D23-EAAD-5BB0-344F-5D85E532B107}</UniqueIdentifier>
     </Filter>
@@ -3693,6 +3696,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\modules\juce_gui_extra\juce_gui_extra.mm">
       <Filter>JUCE Modules\juce_gui_extra</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JuceLibraryCode\BinaryData.cpp">
+      <Filter>JUCE Library Code</Filter>
     </ClCompile>
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_audio_basics.cpp">
       <Filter>JUCE Library Code</Filter>
@@ -7878,6 +7884,9 @@
     <ClInclude Include="..\..\..\..\modules\juce_gui_extra\juce_gui_extra.h">
       <Filter>JUCE Modules\juce_gui_extra</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\JuceLibraryCode\BinaryData.h">
+      <Filter>JUCE Library Code</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\JuceLibraryCode\JuceHeader.h">
       <Filter>JUCE Library Code</Filter>
     </ClInclude>
@@ -7886,6 +7895,21 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Resources\index.html">
+      <Filter>distressorClone\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\styles.css">
+      <Filter>distressorClone\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\main.js">
+      <Filter>distressorClone\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\juce\index.js">
+      <Filter>distressorClone\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\juce\check_native_interop.js">
+      <Filter>distressorClone\Resources</Filter>
+    </None>
     <None Include="..\..\..\..\modules\juce_audio_devices\native\oboe\src\common\README.md">
       <Filter>JUCE Modules\juce_audio_devices\native\oboe\src\common</Filter>
     </None>
@@ -7964,5 +7988,6 @@
     <None Include="..\..\..\..\modules\juce_graphics\unicode\sheenbidi\JUCE_CHANGES.txt">
       <Filter>JUCE Modules\juce_graphics\unicode\sheenbidi</Filter>
     </None>
+    <None Include="packages.config"/>
   </ItemGroup>
 </Project>
