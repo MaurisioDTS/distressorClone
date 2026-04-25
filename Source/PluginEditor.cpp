@@ -109,7 +109,8 @@ void DistressorCloneAudioProcessorEditor::timerCallback()
     payload->setProperty ("inR",  (double) audioProcessor.inputPeakDbR.load());
     payload->setProperty ("outL", (double) audioProcessor.outputPeakDbL.load());
     payload->setProperty ("outR", (double) audioProcessor.outputPeakDbR.load());
-    payload->setProperty ("gr",   (double) audioProcessor.gainReductionDb.load());
+    payload->setProperty ("grL",  (double) audioProcessor.gainReductionDb.load());
+    payload->setProperty ("grR",  (double) audioProcessor.gainReductionDbR.load());
 
     webView.emitEventIfBrowserIsVisible ("meters", juce::var (payload.get()));
 }

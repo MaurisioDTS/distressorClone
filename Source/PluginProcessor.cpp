@@ -282,9 +282,11 @@ float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
     else
         envelopeDb[channel] = releaseCoeff * (envelopeDb[channel] - gainReductionDb) + gainReductionDb;
 
-    // (env�amos el GR al VUmetro)
-    if (channel == 0)  // usar el primer canal como referencia
+    // enviamos el GR al VUmetro por canal (L/Mid = ch0, R/Side = ch1)
+    if (channel == 0)
         this->gainReductionDb.store(-envelopeDb[channel]);
+    else if (channel == 1)
+        this->gainReductionDbR.store(-envelopeDb[channel]);
 
     // 4. Ganancia total
     //float totalGainDbUnLink = envelopeDb[channel] + makeup;
@@ -315,6 +317,11 @@ float DistressorCloneAudioProcessor::LinkComp(float inputSample)
         linkedEnvelopeDb = releaseCoeff * (linkedEnvelopeDb - gainReductionDb) + gainReductionDb;
 
     float totalGainDb = linkedEnvelopeDb /*+ makeup*/;
+
+    // en modo Link ambos canales tienen la misma reduccion
+    this->gainReductionDb.store(-linkedEnvelopeDb);
+    this->gainReductionDbR.store(-linkedEnvelopeDb);
+
     return juce::Decibels::decibelsToGain(totalGainDb);
 }
 

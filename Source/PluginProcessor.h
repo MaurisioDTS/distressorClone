@@ -25,7 +25,8 @@ public:
     //void setDeltaMode(bool enabled) { deltaMode = enabled; }
     //bool isDeltaMode() const { return deltaMode.load(); }
 
-    std::atomic<float> gainReductionDb{ 0.0f };
+    std::atomic<float> gainReductionDb { 0.0f };
+    std::atomic<float> gainReductionDbR{ 0.0f }; // canal R (o Side en M/S)
 
     // Peaks por bloque para los VU meters de la UI. En dBFS (-inf..0, aprox).
     // Se actualizan al final de cada processBlock y se leen desde el editor.
