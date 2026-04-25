@@ -37,7 +37,6 @@ CMakeCache.txt
 cmake_install.cmake
 compile_commands.json
 CTestTestfile.cmake
-Makefile
 install_manifest.txt
 _deps/
 
@@ -59,6 +58,13 @@ Builds/**/x64/
 Builds/**/Win32/
 Builds/**/Debug/
 Builds/**/Release/
+
+# Linux Makefile build output.
+Builds/LinuxMakefile/build/
+Builds/LinuxMakefile/**/intermediate/
+Builds/LinuxMakefile/**/*.so
+Builds/LinuxMakefile/**/*.vst3
+Builds/LinuxMakefile/**/*.a
 
 # Ignore generated JUCE intermediate artefacts but keep AppConfig/includes.
 JuceLibraryCode/BinaryData.*
