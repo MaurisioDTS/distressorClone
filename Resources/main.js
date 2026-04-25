@@ -307,16 +307,16 @@ const bootstrap = () => {
         set("outL", payload.outL);
         set("outR", payload.outR);
 
-        // GR viene en dB positivos (0 = sin reduccion);
-        // los dos canales del GR muestran el mismo valor por ahora.
-        if (typeof payload.gr === "number") {
-            const pct = Math.max(0, Math.min(1, payload.gr / 24)) * 100;
-            const txt = payload.gr > 0.05 ? "-" + payload.gr.toFixed(1) : "0.0";
-            fills.grL.style.height  = pct + "%";
-            fills.grR.style.height  = pct + "%";
-            labels.grL.textContent  = txt;
-            labels.grR.textContent  = txt;
-        }
+        // grL = canal L en Unlink / Mid en M/S / valor comun en Link
+        // grR = canal R en Unlink / Side en M/S / valor comun en Link
+        const setGr = (key, grDb) => {
+            if (typeof grDb !== "number") return;
+            const pct = Math.max(0, Math.min(1, grDb / 24)) * 100;
+            fills[key].style.height  = pct + "%";
+            labels[key].textContent  = grDb > 0.05 ? "-" + grDb.toFixed(1) : "0.0";
+        };
+        setGr("grL", payload.grL);
+        setGr("grR", payload.grR);
     });
 };
 
