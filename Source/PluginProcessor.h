@@ -89,6 +89,11 @@ private:
     float attackCoeff = 0.0f;
     float releaseCoeff = 0.0f;
 
+    // ultimos valores de attack/release ya volcados en los coeficientes.
+    // se usan para detectar cambios en processBlock y recalcular solo cuando hace falta.
+    float lastAttackMs  = -1.0f;
+    float lastReleaseMs = -1.0f;
+
     juce::dsp::Oversampling<float> oversampling{
     2, // n�mero de etapas (x2, x4, etc). Aqu� x4 = 2^2
     2, // factor de oversampling (2 = polyphase IIR, mejor calidad)
@@ -118,6 +123,7 @@ private:
 
     // funciones
 
+    void updateEnvelopeCoefficients();   // recalcula attack/release coeffs
     float computeGainFromLevel(float inputLevelDb, float threshDb, float ratio);
     float Compressor(float inputSample, int channel);
     float LinkComp(float inputSample);

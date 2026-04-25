@@ -34,8 +34,14 @@ std::make_unique<juce::AudioParameterChoice>("distortionModeParam","Distortion M
         0.0f));
     //addParameter(threshold = new juce::AudioParameterFloat("threshold", "Threshold", -60.0f, 0.0f, -24.0f));
     addParameter(ratio = new juce::AudioParameterFloat("ratio", "Ratio", 1.0f, 25.0f, 4.0f));
-    addParameter(attack = new juce::AudioParameterFloat("attack", "Attack", 0.5f, 300.0f, 10.0f));
-    addParameter(release = new juce::AudioParameterFloat("release", "Release", 500.0f, 35000.0f, 100.0f));              
+    addParameter(attack = new juce::AudioParameterFloat("attack",
+        "Attack",
+        juce::NormalisableRange<float>(0.1f, 300.0f, 0.1f, 0.35f),
+        10.0f));
+    addParameter(release = new juce::AudioParameterFloat("release",
+        "Release",
+        juce::NormalisableRange<float>(10.0f, 3000.0f, 1.0f, 0.35f),  // skew para mas resolucion en valores bajos
+        100.0f));
     addParameter(compModeParam = new juce::AudioParameterChoice("mode", "Compressor mode",
         juce::StringArray{ "Unlink", "Link", "M/S" },
         1));
@@ -58,16 +64,34 @@ void DistressorCloneAudioProcessor::prepareToPlay (double newSampleRate, int sam
 
     // Reservamos espacio para el n�mero m�ximo de canales
     envelopeDb.assign(getTotalNumOutputChannels(), 0.0f);
+    linkedEnvelopeDb = 0.0f;
 
-    // Calcular coeficientes a partir de los par�metros iniciales
-    float atkMs = attack->get();
-    float relMs = release->get();
-
-    attackCoeff = std::exp(-1.0f / (0.001f * atkMs * sampleRate));
-    releaseCoeff = std::exp(-1.0f / (0.001f * relMs * sampleRate));
+    // Forzamos primer calculo de coeficientes (atk/rel iniciales)
+    lastAttackMs  = -1.0f;
+    lastReleaseMs = -1.0f;
+    updateEnvelopeCoefficients();
 
     oversampling.reset();
     oversampling.initProcessing(samplesPerBlock);
+}
+
+void DistressorCloneAudioProcessor::updateEnvelopeCoefficients()
+{
+    const float atkMs = attack->get();
+    const float relMs = release->get();
+
+    // Recalcular solo si cambian (parametro suaviza ya hace mucho trabajo, esto es para evitar el exp inutil).
+    if (atkMs != lastAttackMs)
+    {
+        // tau = atkMs ms => coef = exp(-1 / (tau * sr)). Convencion "tiempo a 63%".
+        attackCoeff   = std::exp(-1.0f / (0.001f * std::max(0.01f, atkMs) * sampleRate));
+        lastAttackMs  = atkMs;
+    }
+    if (relMs != lastReleaseMs)
+    {
+        releaseCoeff  = std::exp(-1.0f / (0.001f * std::max(0.01f, relMs) * sampleRate));
+        lastReleaseMs = relMs;
+    }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -103,6 +127,9 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     int numChannels = buffer.getNumChannels();
     int numSamples = buffer.getNumSamples();
 
+    // Refrescamos coeficientes attack/release desde los parametros (criticio: si no, atk/rel no responden)
+    updateEnvelopeCoefficients();
+
     //float inputGainDb = parameters.getRawParameterValue("ratio")->load();
     float inputGainDb = inputGain->get();
     int mode = compModeParam->getIndex(); //  0=Unlink, 1=Link, 2=Mid/Side. 
@@ -121,68 +148,56 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         inputPeakDbR.store(juce::Decibels::gainToDecibels(peakR, -100.0f));
     }
 
-    // TODO arreglar esta condicional
-    if (false)
+    // Procesamiento principal: un unico if/else if/else (antes habia un bug
+    // donde mode==1 caia tambien en el else de mode==2 y se procesaba 2 veces).
+    if (mode == 1) // Link: detector comun, mismo gain a todos los canales
+    {
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            // detector com�n: max entre todos los canales
+            float maxIn = 0.0f;
+            for (int ch = 0; ch < numChannels; ++ch)
+                maxIn = std::max(maxIn, std::fabs(buffer.getSample(ch, sample)));
+
+            // aplicar reducci�n com�n
+            float gain = LinkComp(maxIn);
+
+            for (int ch = 0; ch < numChannels; ++ch)
+                buffer.setSample(ch, sample, buffer.getSample(ch, sample) * gain);
+        }
+    }
+    else if (mode == 2 && numChannels >= 2) // M/S: solo en estereo
+    {
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            float L = buffer.getSample(0, sample);
+            float R = buffer.getSample(1, sample);
+
+            // convertir a Mid/Side (energia conservada)
+            float Mid  = (L + R) * 0.7071f;
+            float Side = (L - R) * 0.7071f;
+
+            // procesar por separado (canal 0 -> Mid, canal 1 -> Side)
+            float MidOut  = Compressor(Mid,  0);
+            float SideOut = Compressor(Side, 1);
+
+            // volver a L/R
+            float newL = (MidOut + SideOut) * 0.7071f;
+            float newR = (MidOut - SideOut) * 0.7071f;
+
+            buffer.setSample(0, sample, newL);
+            buffer.setSample(1, sample, newR);
+        }
+    }
+    else // mode 0 (Unlink) o fallback si M/S sin estereo
     {
         for (int sample = 0; sample < numSamples; ++sample)
         {
             for (int ch = 0; ch < numChannels; ++ch)
             {
-                float in = buffer.getSample(ch, sample);
-                float out = in - Compressor(in, ch);
+                float in  = buffer.getSample(ch, sample);
+                float out = postCompFxChain(Compressor(in, ch)); // efectos en serie
                 buffer.setSample(ch, sample, out);
-            }
-        }
-    }
-    else // Procesamiento normal
-    {
-        if (mode == 1) {
-            for (int sample = 0; sample < numSamples; ++sample)
-            {
-                // detector com�n: max entre todos los canales
-                float maxIn = 0.0f;
-                for (int ch = 0; ch < numChannels; ++ch)
-                    maxIn = std::max(maxIn, std::fabs(buffer.getSample(ch, sample)));
-
-                // aplicar reducci�n com�n
-                float gain = LinkComp(maxIn);
-
-                for (int ch = 0; ch < numChannels; ++ch)
-                    buffer.setSample(ch, sample, buffer.getSample(ch, sample) * gain);
-            }
-        }
-        if (mode == 2 && numChannels >= 2) // el mid side SOLO funciona en stereo, 2 canales.
-        {
-            for (int sample = 0; sample < numSamples; ++sample)
-            {
-                float L = buffer.getSample(0, sample);
-                float R = buffer.getSample(1, sample);
-
-                // convertir a Mid/Side
-                float Mid = (L + R) * 0.7071f;
-                float Side = (L - R) * 0.7071f;
-
-                // procesar por separado
-                float MidOut = Compressor(Mid, 0);
-                float SideOut = Compressor(Side, 1);
-
-                // volver a L/R
-                float newL = (MidOut + SideOut) * 0.7071f;
-                float newR = (MidOut - SideOut) * 0.7071f;
-
-                buffer.setSample(0, sample, newL);
-                buffer.setSample(1, sample, newR);
-            }
-        }
-        else { // mode 0 es el default
-            for (int sample = 0; sample < numSamples; ++sample)
-            {
-                for (int ch = 0; ch < numChannels; ++ch)
-                {
-                    float in = buffer.getSample(ch, sample);
-                    float out = postCompFxChain(Compressor(in, ch)); // aqui est�n los efectos en serie
-                    buffer.setSample(ch, sample, out);
-                }
             }
         }
     }
@@ -259,24 +274,20 @@ float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, fl
 }
 
 float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
-{;
+{
     float thresh = this->threshold; // -24dB
-    float ratio = this->ratio->get();
-    float gainReductionDb = 0.0f;
+    float ratio  = this->ratio->get();
 
-    // 1. Convertir a dBFS
+    // 1. Convertir a dBFS (siempre con valor absoluto)
     float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(inputSample) + 1.0e-10f);
-    //float inputLevelDbLink = juce::Decibels::gainToDecibels(inputSample + 1.0e-10f);
 
-    // 2. La compresi�n en si misma.
-        
-    if (inputLevelDb > thresh)
-    {
-       //gainReductionDb = (thresh + (inputLevelDb - thresh) / compRatio) - inputLevelDb
-        gainReductionDb = computeGainFromLevel(inputLevelDb,thresh,ratio);
-    }
+    // 2. Calculo de la GR estatica (curva con knee).
+    //    computeGainFromLevel ya devuelve 0 cuando la senal esta por debajo del knee,
+    //    asi que la llamamos siempre. (Antes solo se llamaba si level > thresh, lo que
+    //    hacia que la mitad inferior del soft-knee se perdiera.)
+    float gainReductionDb = computeGainFromLevel(inputLevelDb, thresh, ratio);
 
-    // 3. Suavizado por canal
+    // 3. Suavizado por canal (envelope follower de un polo, log-domain)
     if (gainReductionDb < envelopeDb[channel])
         envelopeDb[channel] = attackCoeff * (envelopeDb[channel] - gainReductionDb) + gainReductionDb;
     else
@@ -288,41 +299,31 @@ float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
     else if (channel == 1)
         this->gainReductionDbR.store(-envelopeDb[channel]);
 
-    // 4. Ganancia total
-    //float totalGainDbUnLink = envelopeDb[channel] + makeup;
-    //float totalGainUnLink = juce::Decibels::decibelsToGain(totalGainDbUnLink);
-
-    // 5. Devolver muestra procesada
+    // 4. Devolver muestra procesada
     return inputSample * juce::Decibels::decibelsToGain(envelopeDb[channel]);
 }
 
 float DistressorCloneAudioProcessor::LinkComp(float inputSample)
 {
     float thresh = this->threshold;
-    float ratio = this->ratio->get();
-    //float makeup = 0;
+    float ratio  = this->ratio->get();
 
-    float inputLevelDb = juce::Decibels::gainToDecibels(inputSample + 1.0e-10f);
+    float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(inputSample) + 1.0e-10f);
 
-    float gainReductionDb = 0.0f;
-
-    if (inputLevelDb > thresh)
-        //gainReductionDb = (thresh + (inputLevelDb - thresh) / compRatio) - inputLevelDb;
-        gainReductionDb = computeGainFromLevel(inputLevelDb, thresh, ratio);
+    // Misma logica que Compressor: llamar siempre para no perder el knee inferior.
+    float gainReductionDb = computeGainFromLevel(inputLevelDb, thresh, ratio);
 
     // suavizado com�n
     if (gainReductionDb < linkedEnvelopeDb)
-        linkedEnvelopeDb = attackCoeff * (linkedEnvelopeDb - gainReductionDb) + gainReductionDb;
+        linkedEnvelopeDb = attackCoeff  * (linkedEnvelopeDb - gainReductionDb) + gainReductionDb;
     else
         linkedEnvelopeDb = releaseCoeff * (linkedEnvelopeDb - gainReductionDb) + gainReductionDb;
 
-    float totalGainDb = linkedEnvelopeDb /*+ makeup*/;
-
     // en modo Link ambos canales tienen la misma reduccion
-    this->gainReductionDb.store(-linkedEnvelopeDb);
+    this->gainReductionDb.store (-linkedEnvelopeDb);
     this->gainReductionDbR.store(-linkedEnvelopeDb);
 
-    return juce::Decibels::decibelsToGain(totalGainDb);
+    return juce::Decibels::decibelsToGain(linkedEnvelopeDb);
 }
 
 float DistressorCloneAudioProcessor::thDistortion(float inputSample)
