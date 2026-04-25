@@ -264,31 +264,58 @@ const bootstrap = () => {
     );
 
     // --- VU meters ---
-    const meterFills = {
-        inL: document.querySelector('[data-meter="inL"] .meter-fill'),
-        inR: document.querySelector('[data-meter="inR"] .meter-fill'),
+    const fills = {
+        inL:  document.querySelector('[data-meter="inL"]  .meter-fill'),
+        inR:  document.querySelector('[data-meter="inR"]  .meter-fill'),
         outL: document.querySelector('[data-meter="outL"] .meter-fill'),
         outR: document.querySelector('[data-meter="outR"] .meter-fill'),
-        gr: document.querySelector('[data-meter="gr"] .meter-fill'),
+        grL:  document.querySelector('[data-meter="grL"]  .meter-fill'),
+        grR:  document.querySelector('[data-meter="grR"]  .meter-fill'),
     };
 
-    // Mapea dB (-60..+6) a porcentaje (0..100) para meters in/out
+    const labels = {
+        inL:  document.querySelector('[data-dbfs="inL"]'),
+        inR:  document.querySelector('[data-dbfs="inR"]'),
+        outL: document.querySelector('[data-dbfs="outL"]'),
+        outR: document.querySelector('[data-dbfs="outR"]'),
+        grL:  document.querySelector('[data-dbfs="grL"]'),
+        grR:  document.querySelector('[data-dbfs="grR"]'),
+    };
+
+    // dB (-60..+6) → porcentaje de barra (0..100)
     const dbToPercent = (db, minDb = -60, maxDb = 6) => {
         if (!isFinite(db)) return 0;
-        const clamped = Math.max(minDb, Math.min(maxDb, db));
-        return ((clamped - minDb) / (maxDb - minDb)) * 100;
+        return ((Math.max(minDb, Math.min(maxDb, db)) - minDb) / (maxDb - minDb)) * 100;
+    };
+
+    const fmtDb = (db) => {
+        if (db <= -99) return "-\u221e";
+        return (db >= 0 ? "+" : "") + db.toFixed(1);
     };
 
     window.__JUCE__.backend.addEventListener("meters", (payload) => {
         if (!payload) return;
-        if (typeof payload.inL === "number") meterFills.inL.style.height = dbToPercent(payload.inL) + "%";
-        if (typeof payload.inR === "number") meterFills.inR.style.height = dbToPercent(payload.inR) + "%";
-        if (typeof payload.outL === "number") meterFills.outL.style.height = dbToPercent(payload.outL) + "%";
-        if (typeof payload.outR === "number") meterFills.outR.style.height = dbToPercent(payload.outR) + "%";
-        // GR viene en dB positivos (0 = sin reduccion, 24 = maxima)
+
+        const set = (key, db) => {
+            if (typeof db !== "number") return;
+            fills[key].style.height = dbToPercent(db) + "%";
+            labels[key].textContent = fmtDb(db);
+        };
+
+        set("inL",  payload.inL);
+        set("inR",  payload.inR);
+        set("outL", payload.outL);
+        set("outR", payload.outR);
+
+        // GR viene en dB positivos (0 = sin reduccion);
+        // los dos canales del GR muestran el mismo valor por ahora.
         if (typeof payload.gr === "number") {
             const pct = Math.max(0, Math.min(1, payload.gr / 24)) * 100;
-            meterFills.gr.style.height = pct + "%";
+            const txt = payload.gr > 0.05 ? "-" + payload.gr.toFixed(1) : "0.0";
+            fills.grL.style.height  = pct + "%";
+            fills.grR.style.height  = pct + "%";
+            labels.grL.textContent  = txt;
+            labels.grR.textContent  = txt;
         }
     });
 };

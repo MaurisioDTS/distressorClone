@@ -69,26 +69,55 @@
         <section class="panel panel-meters">
             <h3 class="panel-title">Meters</h3>
             <div class="meters-grid">
-                <div class="meter-block">
-                    <span class="meter-label">In L</span>
-                    <div class="meter" data-meter="inL"><div class="meter-fill"></div></div>
+
+                <div class="meter-group">
+                    <span class="meter-group-label">In</span>
+                    <div class="meter-pair">
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="inL">--</span>
+                            <div class="meter" data-meter="inL"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">L</span>
+                        </div>
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="inR">--</span>
+                            <div class="meter" data-meter="inR"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">R</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="meter-block">
-                    <span class="meter-label">In R</span>
-                    <div class="meter" data-meter="inR"><div class="meter-fill"></div></div>
+
+                <div class="meter-group">
+                    <span class="meter-group-label">GR</span>
+                    <div class="meter-pair">
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="grL">--</span>
+                            <div class="meter meter-down" data-meter="grL"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">L</span>
+                        </div>
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="grR">--</span>
+                            <div class="meter meter-down" data-meter="grR"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">R</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="meter-block meter-gr">
-                    <span class="meter-label">GR</span>
-                    <div class="meter meter-down" data-meter="gr"><div class="meter-fill"></div></div>
+
+                <div class="meter-group">
+                    <span class="meter-group-label">Out</span>
+                    <div class="meter-pair">
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="outL">--</span>
+                            <div class="meter" data-meter="outL"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">L</span>
+                        </div>
+                        <div class="meter-col">
+                            <span class="meter-dbfs" data-dbfs="outR">--</span>
+                            <div class="meter" data-meter="outR"><div class="meter-fill"></div></div>
+                            <span class="meter-ch">R</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="meter-block">
-                    <span class="meter-label">Out L</span>
-                    <div class="meter" data-meter="outL"><div class="meter-fill"></div></div>
-                </div>
-                <div class="meter-block">
-                    <span class="meter-label">Out R</span>
-                    <div class="meter" data-meter="outR"><div class="meter-fill"></div></div>
-                </div>
+
             </div>
         </section>
     </div>

@@ -355,32 +355,72 @@ body {
 
 .meters-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
     height: calc(100% - 26px);
 }
 
-.meter-block {
+/* grupo: label de sección + par de barras */
+.meter-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     height: 100%;
 }
 
-.meter-label {
+.meter-group-label {
     font-size: 10px;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--text-dark);
+    line-height: 1;
+}
+
+/* par de barras pegadas */
+.meter-pair {
+    display: flex;
+    gap: 2px;
+    flex: 1 1 auto;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* columna individual dentro de un par */
+.meter-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+/* label dBFS encima de la barra (se actualiza por JS) */
+.meter-dbfs {
+    font-size: 8px;
+    font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    color: #ffb84d;
+    text-shadow: 0 0 4px rgba(255, 184, 77, 0.5);
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* label L/R debajo de la barra */
+.meter-ch {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1;
 }
 
 .meter {
     position: relative;
-    width: 18px;
+    width: 14px;
     flex: 1 1 auto;
     background: linear-gradient(180deg, var(--bg-meter-track-edge), var(--bg-meter-track));
-    border-radius: 4px;
+    border-radius: 3px;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(0, 0, 0, 0.6);
     overflow: hidden;
 }
@@ -391,17 +431,16 @@ body {
     right: 0;
     bottom: 0;
     height: 0%;
-    background: linear-gradient(180deg, var(--meter-red) 0%, var(--meter-yellow) 30%, var(--meter-green) 65%, var(--meter-green) 100%);
+    background: linear-gradient(180deg,
+        var(--meter-red)    0%,
+        var(--meter-yellow) 30%,
+        var(--meter-green)  65%,
+        var(--meter-green)  100%);
     transition: height 60ms linear;
 }
 
 .meter-down .meter-fill {
     background: var(--meter-gr);
-    top: 0;
-    bottom: auto;
-}
-
-.meter-gr .meter-fill {
     top: 0;
     bottom: auto;
 }
