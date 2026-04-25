@@ -83,9 +83,7 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
     addAndMakeVisible (webView);
     webView.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
 
-    setResizable (true, true);
-    setResizeLimits (500, 420, 1200, 1000);
-    setSize (700, 620);
+    setSize (600, 600);
 
     startTimerHz (30); // refresh de los VU meters
 }
