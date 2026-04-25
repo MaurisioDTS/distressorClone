@@ -5,9 +5,6 @@
   <ItemGroup/>
   <ItemGroup/>
   <ItemGroup>
-    <None Include="packages.config"/>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include=".\resources.rc">
       <Filter>JUCE Library Code</Filter>
     </ResourceCompile>
