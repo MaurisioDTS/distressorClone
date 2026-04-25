@@ -17,25 +17,29 @@
             <section class="panel panel-controls">
                 <h3 class="panel-title">Controls</h3>
 
-                <div class="switch-group" data-group="distortionMode">
-                    <span class="group-label">Distortion</span>
-                    <div class="button-row" id="distortionButtons"></div>
-                </div>
-
-                <div class="switch-group" data-group="ratio">
-                    <span class="group-label">Ratio</span>
-                    <div class="ratio-row">
-                        <button class="pill-btn ratio-cycle" id="ratioCycleBtn" type="button">Ratio</button>
-                        <div class="lcd" id="ratioDisplay">
-                            <span class="lcd-value">--</span>
-                            <span class="lcd-unit">:1</span>
-                        </div>
+                <div class="lcd lcd-strip" id="controlsDisplay">
+                    <div class="lcd-section" data-section="distortionMode">
+                        <!-- <span class="lcd-label">Distortion</span> -->
+                        <span class="lcd-value">--</span>
+                    </div>
+                    <div class="lcd-divider"></div>
+                    <div class="lcd-section" data-section="ratio">
+                        <!-- <span class="lcd-label">Ratio</span> -->
+                        <span class="lcd-value">
+                            <span class="lcd-number">--</span><span class="lcd-unit">:1</span>
+                        </span>
+                    </div>
+                    <div class="lcd-divider"></div>
+                    <div class="lcd-section" data-section="mode">
+                        <!-- <span class="lcd-label">Detection</span> -->
+                        <span class="lcd-value">--</span>
                     </div>
                 </div>
 
-                <div class="switch-group" data-group="mode">
-                    <span class="group-label">Detection</span>
-                    <div class="button-row" id="modeButtons"></div>
+                <div class="cycle-row">
+                    <button class="pill-btn cycle-btn" id="distortionCycleBtn" type="button">Distortion</button>
+                    <button class="pill-btn cycle-btn" id="ratioCycleBtn"      type="button">Ratio</button>
+                    <button class="pill-btn cycle-btn" id="modeCycleBtn"       type="button">Detection</button>
                 </div>
             </section>
 

@@ -150,41 +150,34 @@ class RotaryKnob {
 }
 
 // ------------------------------------------------------------------
-//  Button groups conectados a ComboBoxState (choice parameters)
+//  Choice cycle control: un boton ciclico + display LCD para
+//  parametros tipo AudioParameterChoice (ComboBoxState).
 // ------------------------------------------------------------------
 
-class ChoiceButtonGroup {
-    constructor(container, comboState) {
-        this.container = container;
+class ChoiceCycleControl {
+    constructor(button, displayValueEl, comboState) {
+        this.button = button;
+        this.display = displayValueEl;
         this.combo = comboState;
-        this.buttons = [];
 
-        this.combo.propertiesChangedEvent.addListener(() => this.renderButtons());
-        this.combo.valueChangedEvent.addListener(() => this.refreshActive());
+        this.combo.propertiesChangedEvent.addListener(() => this.refreshDisplay());
+        this.combo.valueChangedEvent.addListener(() => this.refreshDisplay());
 
-        this.renderButtons();
+        this.button.addEventListener("click", () => this.cycleNext());
+        this.refreshDisplay();
     }
 
-    renderButtons() {
-        this.container.innerHTML = "";
-        this.buttons = [];
+    cycleNext() {
         const choices = this.combo.properties.choices || [];
-        choices.forEach((label, idx) => {
-            const btn = document.createElement("button");
-            btn.className = "pill-btn";
-            btn.textContent = label;
-            btn.addEventListener("click", () => this.combo.setChoiceIndex(idx));
-            this.container.appendChild(btn);
-            this.buttons.push(btn);
-        });
-        this.refreshActive();
+        if (choices.length === 0) return;
+        const next = (this.combo.getChoiceIndex() + 1) % choices.length;
+        this.combo.setChoiceIndex(next);
     }
 
-    refreshActive() {
-        const selected = this.combo.getChoiceIndex();
-        this.buttons.forEach((b, i) => {
-            b.classList.toggle("active", i === selected);
-        });
+    refreshDisplay() {
+        const choices = this.combo.properties.choices || [];
+        const idx = this.combo.getChoiceIndex();
+        this.display.textContent = choices[idx] ?? "--";
     }
 }
 
@@ -247,23 +240,27 @@ const bootstrap = () => {
         new RotaryKnob(el, state, unit);
     });
 
-    // --- choice groups (distortionMode, mode) ---
-    new ChoiceButtonGroup(
-        document.getElementById("distortionButtons"),
+    // --- panel de controles: 3 secciones ciclicas dentro de la misma LCD ---
+    const sectionValue = (section) =>
+        document.querySelector(`#controlsDisplay .lcd-section[data-section="${section}"] .lcd-value`);
+
+    new ChoiceCycleControl(
+        document.getElementById("distortionCycleBtn"),
+        sectionValue("distortionMode"),
         Juce.getComboBoxState("distortionMode")
     );
 
-    new ChoiceButtonGroup(
-        document.getElementById("modeButtons"),
-        Juce.getComboBoxState("mode")
-    );
-
-    // --- ratio: bot�n unico ciclico + display LCD ---
     new RatioCycleControl(
         document.getElementById("ratioCycleBtn"),
-        document.querySelector("#ratioDisplay .lcd-value"),
+        document.querySelector('#controlsDisplay .lcd-section[data-section="ratio"] .lcd-number'),
         Juce.getSliderState("ratio"),
         [2, 4, 6, 10, 20]
+    );
+
+    new ChoiceCycleControl(
+        document.getElementById("modeCycleBtn"),
+        sectionValue("mode"),
+        Juce.getComboBoxState("mode")
     );
 
     // --- VU meters ---
