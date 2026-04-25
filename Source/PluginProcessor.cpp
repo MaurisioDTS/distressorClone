@@ -37,7 +37,7 @@ std::make_unique<juce::AudioParameterChoice>("distortionModeParam","Distortion M
     addParameter(attack = new juce::AudioParameterFloat("attack", "Attack", 0.5f, 300.0f, 10.0f));
     addParameter(release = new juce::AudioParameterFloat("release", "Release", 500.0f, 35000.0f, 100.0f));              
     addParameter(compModeParam = new juce::AudioParameterChoice("mode", "Compressor mode",
-        juce::StringArray{ "Unlink", "Link", "Mid/Side" },
+        juce::StringArray{ "Unlink", "Link", "M/S" },
         1));
     addParameter(distModeParam = new juce::AudioParameterChoice("distortionMode","Distortion Mode",
         juce::StringArray{ "Normal", "Dist 2", "Dist 3" },
