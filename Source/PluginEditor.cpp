@@ -37,11 +37,16 @@ namespace
 DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (DistressorCloneAudioProcessor& p)
     : AudioProcessorEditor (&p),
       audioProcessor (p),
-      webView (juce::WebBrowserComponent::Options{}
+      webView (
+#if JUCE_WINDOWS
+               juce::WebBrowserComponent::Options{}
                    .withBackend (juce::WebBrowserComponent::Options::Backend::webview2)
                    .withWinWebView2Options (juce::WebBrowserComponent::Options::WinWebView2{}
                                                 .withUserDataFolder (juce::File::getSpecialLocation (juce::File::tempDirectory))
                                                 .withBackgroundColour (juce::Colours::black))
+#else
+               juce::WebBrowserComponent::Options{}
+#endif
                    .withNativeIntegrationEnabled()
                    .withResourceProvider ([this] (const juce::String& url)
                                           { return provideResource (url); })

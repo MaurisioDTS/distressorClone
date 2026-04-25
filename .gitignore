@@ -67,7 +67,7 @@ Builds/LinuxMakefile/**/*.vst3
 Builds/LinuxMakefile/**/*.a
 
 # Ignore generated JUCE intermediate artefacts but keep AppConfig/includes.
-JuceLibraryCode/BinaryData.*
+JuceLibraryCode/
 JuceLibraryCode/*.o
 JuceLibraryCode/*.obj
 
