@@ -29,7 +29,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -50,7 +51,7 @@ html, body {
     padding: 14px;
     gap: 14px;
     background:
-        radial-gradient(circle at top left, rgba(255,255,255,0.03), transparent 60%),
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 60%),
         linear-gradient(180deg, #1a1a1d 0%, #101012 100%);
 }
 
@@ -60,7 +61,7 @@ html, body {
     align-items: baseline;
     gap: 12px;
     padding: 0 4px 6px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand {
@@ -69,7 +70,9 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-.brand .accent { color: var(--accent); }
+.brand .accent {
+    color: var(--accent);
+}
 
 .subtitle {
     font-size: 11px;
@@ -91,8 +94,8 @@ html, body {
     border-radius: 16px;
     padding: 14px;
     box-shadow:
-        0 4px 14px rgba(0,0,0,0.4),
-        inset 0 1px 0 rgba(255,255,255,0.06);
+        0 4px 14px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .panel-title {
@@ -101,7 +104,7 @@ html, body {
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 /* ---- controls panel ---- */
@@ -122,13 +125,62 @@ html, body {
     font-size: 10px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .button-row {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+}
+
+/* fila ratio: bot�n NEXT + pantallita LCD */
+.ratio-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.ratio-cycle {
+    flex: 0 0 auto;
+    min-width: 64px;
+}
+
+.lcd {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #0a1208 0%, #0f1a0c 100%);
+    border: 1px solid #000;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 200, 100, 0.05),
+        inset 0 2px 6px rgba(0, 0, 0, 0.6),
+        0 1px 0 rgba(255, 255, 255, 0.04);
+    font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+    color: #ffb84d;
+    text-shadow:
+        0 0 4px rgba(255, 184, 77, 0.6),
+        0 0 10px rgba(255, 140, 30, 0.35);
+    overflow: hidden;
+}
+
+.lcd-value {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.lcd-unit {
+    font-size: 11px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    line-height: 1;
 }
 
 .pill-btn {
@@ -144,18 +196,23 @@ html, body {
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: background 120ms ease, transform 80ms ease, box-shadow 120ms ease;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
-.pill-btn:hover { background: #a8a8a8; }
-.pill-btn:active { transform: translateY(1px); }
+.pill-btn:hover {
+    background: #a8a8a8;
+}
+
+.pill-btn:active {
+    transform: translateY(1px);
+}
 
 .pill-btn.active {
     background: var(--accent);
     color: #1a1a1a;
     box-shadow:
-        0 0 0 2px rgba(255,139,61,0.35),
-        0 1px 2px rgba(0,0,0,0.4);
+        0 0 0 2px rgba(255, 139, 61, 0.35),
+        0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* ---- knobs panel ---- */
@@ -188,7 +245,9 @@ html, body {
     touch-action: none;
 }
 
-.knob:active { cursor: grabbing; }
+.knob:active {
+    cursor: grabbing;
+}
 
 .knob svg {
     width: 100%;
@@ -198,7 +257,7 @@ html, body {
 
 .knob .track {
     fill: none;
-    stroke: rgba(255,255,255,0.12);
+    stroke: rgba(255, 255, 255, 0.12);
     stroke-width: 5;
     stroke-linecap: round;
 }
@@ -284,7 +343,7 @@ html, body {
     flex: 1 1 auto;
     background: linear-gradient(180deg, var(--bg-meter-track-edge), var(--bg-meter-track));
     border-radius: 4px;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.45), inset 0 1px 2px rgba(0,0,0,0.6);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(0, 0, 0, 0.6);
     overflow: hidden;
 }
 

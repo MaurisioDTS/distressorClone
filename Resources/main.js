@@ -189,60 +189,48 @@ class ChoiceButtonGroup {
 }
 
 // ------------------------------------------------------------------
-//  Button group para ratio (SliderState con presets)
+//  Ratio ciclo y pantallita LCD
 // ------------------------------------------------------------------
 
-class RatioPresetGroup {
-    constructor(container, sliderState, presets) {
-        this.container = container;
+class RatioCycleControl {
+    constructor(button, displayValueEl, sliderState, presets) {
+        this.button = button;
+        this.display = displayValueEl;
         this.slider = sliderState;
-        this.presets = presets; // array de numeros en unidades del parametro
-        this.buttons = [];
+        this.presets = presets; // valores en unidades del par�metro
 
-        this.slider.valueChangedEvent.addListener(() => this.refreshActive());
-        this.slider.propertiesChangedEvent.addListener(() => this.refreshActive());
+        this.slider.valueChangedEvent.addListener(() => this.refreshDisplay());
+        this.slider.propertiesChangedEvent.addListener(() => this.refreshDisplay());
 
-        this.render();
+        this.button.addEventListener("click", () => this.cycleNext());
+        this.refreshDisplay();
     }
 
-    render() {
-        this.container.innerHTML = "";
-        this.buttons = [];
-        this.presets.forEach((value) => {
-            const btn = document.createElement("button");
-            btn.className = "pill-btn";
-            btn.textContent = `${value}:1`;
-            btn.addEventListener("click", () => {
-                const { start, end, skew } = this.slider.properties;
-                if (end > start) {
-                    const clamped = Math.max(start, Math.min(end, value));
-                    const normalised = Math.pow((clamped - start) / (end - start), skew || 1);
-                    this.slider.sliderDragStarted();
-                    this.slider.setNormalisedValue(normalised);
-                    this.slider.sliderDragEnded();
-                }
-            });
-            this.container.appendChild(btn);
-            this.buttons.push(btn);
-        });
-        this.refreshActive();
+    setRatio(value) {
+        const { start, end, skew } = this.slider.properties;
+        if (!(end > start)) return;
+        const clamped = Math.max(start, Math.min(end, value));
+        const normalised = Math.pow((clamped - start) / (end - start), skew || 1);
+        this.slider.sliderDragStarted();
+        this.slider.setNormalisedValue(normalised);
+        this.slider.sliderDragEnded();
     }
 
-    refreshActive() {
+    cycleNext() {
         const current = this.slider.getScaledValue();
-        // marcamos como activo el preset mas cercano
-        let closestIdx = 0;
-        let closestDist = Infinity;
-        this.presets.forEach((v, i) => {
-            const d = Math.abs(v - current);
-            if (d < closestDist) {
-                closestDist = d;
-                closestIdx = i;
-            }
-        });
-        this.buttons.forEach((b, i) => {
-            b.classList.toggle("active", i === closestIdx && closestDist < 0.5);
-        });
+        // siguiente preset estrictamente mayor que el actual (con tolerancia);
+        // si no hay, vuelve al primero (wrap-around).
+        const next = this.presets.find(v => v > current + 0.01);
+        this.setRatio(next !== undefined ? next : this.presets[0]);
+    }
+
+    refreshDisplay() {
+        const v = this.slider.getScaledValue();
+        // si el valor es practicamente entero, lo mostramos sin decimales
+        const text = Math.abs(v - Math.round(v)) < 0.05
+            ? `${Math.round(v)}`
+            : v.toFixed(1);
+        this.display.textContent = text;
     }
 }
 
@@ -270,9 +258,10 @@ const bootstrap = () => {
         Juce.getComboBoxState("mode")
     );
 
-    // --- ratio presets ---
-    new RatioPresetGroup(
-        document.getElementById("ratioButtons"),
+    // --- ratio: bot�n unico ciclico + display LCD ---
+    new RatioCycleControl(
+        document.getElementById("ratioCycleBtn"),
+        document.querySelector("#ratioDisplay .lcd-value"),
         Juce.getSliderState("ratio"),
         [2, 4, 6, 10, 20]
     );
