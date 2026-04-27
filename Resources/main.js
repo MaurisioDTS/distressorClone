@@ -288,6 +288,12 @@ const bootstrap = () => {
         col.appendChild(scaleEl);
         col.appendChild(chLabel);
         pairEl.insertBefore(col, pairEl.firstChild);
+
+        // Espaciador simétrico a la derecha para mantener las barras centradas
+        const spacer = document.createElement('div');
+        spacer.className = 'meter-scale-spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        pairEl.appendChild(spacer);
     };
 
     // Level: rango -60..+6 dBFS, top% = (6 - db) / 66 * 100

@@ -500,6 +500,11 @@ body {
     width: 7px;
 }
 
+.meter-scale-spacer {
+    width: 26px;
+    flex-shrink: 0;
+}
+
 /* ---- LCD de pico debajo de cada grupo de metros ---- */
 .lcd-meter-peak {
     width: 100%;
