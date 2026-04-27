@@ -444,3 +444,16 @@ body {
     top: 0;
     bottom: auto;
 }
+
+/* ---- LCD de pico debajo de cada grupo de metros ---- */
+.lcd-meter-peak {
+    width: 100%;
+    padding: 3px 6px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.lcd-meter-peak .lcd-value {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}

@@ -273,13 +273,10 @@ const bootstrap = () => {
         grR:  document.querySelector('[data-meter="grR"]  .meter-fill'),
     };
 
-    const labels = {
-        inL:  document.querySelector('[data-dbfs="inL"]'),
-        inR:  document.querySelector('[data-dbfs="inR"]'),
-        outL: document.querySelector('[data-dbfs="outL"]'),
-        outR: document.querySelector('[data-dbfs="outR"]'),
-        grL:  document.querySelector('[data-dbfs="grL"]'),
-        grR:  document.querySelector('[data-dbfs="grR"]'),
+    const lcdPeaks = {
+        in:  document.querySelector('[data-meter-lcd="in"]  .lcd-value'),
+        gr:  document.querySelector('[data-meter-lcd="gr"]  .lcd-value'),
+        out: document.querySelector('[data-meter-lcd="out"] .lcd-value'),
     };
 
     // dB (-60..+6) → porcentaje de barra (0..100)
@@ -299,7 +296,6 @@ const bootstrap = () => {
         const set = (key, db) => {
             if (typeof db !== "number") return;
             fills[key].style.height = dbToPercent(db) + "%";
-            labels[key].textContent = fmtDb(db);
         };
 
         set("inL",  payload.inL);
@@ -307,16 +303,36 @@ const bootstrap = () => {
         set("outL", payload.outL);
         set("outR", payload.outR);
 
+        // LCD peak In: valor más alto del par L/R
+        const peakIn = Math.max(
+            typeof payload.inL === "number" ? payload.inL : -Infinity,
+            typeof payload.inR === "number" ? payload.inR : -Infinity
+        );
+        if (isFinite(peakIn)) lcdPeaks.in.textContent = fmtDb(peakIn);
+
+        // LCD peak Out: valor más alto del par L/R
+        const peakOut = Math.max(
+            typeof payload.outL === "number" ? payload.outL : -Infinity,
+            typeof payload.outR === "number" ? payload.outR : -Infinity
+        );
+        if (isFinite(peakOut)) lcdPeaks.out.textContent = fmtDb(peakOut);
+
         // grL = canal L en Unlink / Mid en M/S / valor comun en Link
         // grR = canal R en Unlink / Side en M/S / valor comun en Link
         const setGr = (key, grDb) => {
             if (typeof grDb !== "number") return;
             const pct = Math.max(0, Math.min(1, grDb / 24)) * 100;
-            fills[key].style.height  = pct + "%";
-            labels[key].textContent  = grDb > 0.05 ? "-" + grDb.toFixed(1) : "0.0";
+            fills[key].style.height = pct + "%";
         };
         setGr("grL", payload.grL);
         setGr("grR", payload.grR);
+
+        // LCD peak GR: mayor reducción de ganancia del par L/R
+        const peakGr = Math.max(
+            typeof payload.grL === "number" ? payload.grL : 0,
+            typeof payload.grR === "number" ? payload.grR : 0
+        );
+        lcdPeaks.gr.textContent = peakGr > 0.05 ? "-" + peakGr.toFixed(1) : "0.0";
     });
 };
 
