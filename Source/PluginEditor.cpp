@@ -55,6 +55,7 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
                    .withOptionsFrom (attackRelay)
                    .withOptionsFrom (releaseRelay)
                    .withOptionsFrom (ratioRelay)
+                   .withOptionsFrom (dryWetRelay)
                    .withOptionsFrom (modeRelay)
                    .withOptionsFrom (distModeRelay))
 {
@@ -82,6 +83,7 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
     attackAttach     = attachSlider (attackRelay,     "attack");
     releaseAttach    = attachSlider (releaseRelay,    "release");
     ratioAttach      = attachSlider (ratioRelay,      "ratio");
+    dryWetAttach     = attachSlider (dryWetRelay,     "dryWet");
     modeAttach       = attachCombo  (modeRelay,       "mode");
     distModeAttach   = attachCombo  (distModeRelay,   "distortionMode");
 

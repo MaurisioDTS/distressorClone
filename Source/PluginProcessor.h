@@ -108,6 +108,7 @@ private:
     juce::AudioParameterFloat* release;
     juce::AudioParameterFloat* inputGain;
     juce::AudioParameterFloat* outputGain;
+    juce::AudioParameterFloat* dryWet;
 
     juce::AudioParameterFloat* ratio;
 

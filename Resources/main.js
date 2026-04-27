@@ -10,6 +10,7 @@ const formatValue = (value, unit) => {
         if (value >= 1000) return `${(value / 1000).toFixed(2)} s`;
         return `${value.toFixed(1)} ms`;
     }
+    if (unit === "%") return `${Math.round(value * 100)} %`;
     return value.toFixed(2);
 };
 
