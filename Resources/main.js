@@ -281,12 +281,7 @@ const bootstrap = () => {
             scaleEl.appendChild(tick);
         });
 
-        const chLabel = document.createElement('span');
-        chLabel.className = 'meter-ch';
-        chLabel.textContent = 'dB';
-
         col.appendChild(scaleEl);
-        col.appendChild(chLabel);
         pairEl.insertBefore(col, pairEl.firstChild);
 
         // Espaciador simétrico a la derecha para mantener las barras centradas
