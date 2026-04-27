@@ -263,6 +263,49 @@ const bootstrap = () => {
         Juce.getComboBoxState("mode")
     );
 
+    // --- Escalas de los metros ---
+    const addMeterScale = (pairEl, ticks) => {
+        const col = document.createElement('div');
+        col.className = 'meter-col meter-scale-col';
+
+        const scaleEl = document.createElement('div');
+        scaleEl.className = 'meter-scale';
+
+        ticks.forEach(({ label, topPct }) => {
+            const tick = document.createElement('div');
+            tick.className = 'scale-tick';
+            tick.style.top = topPct + '%';
+            tick.innerHTML =
+                `<span class="scale-tick-label">${label}</span>` +
+                `<span class="scale-tick-line"></span>`;
+            scaleEl.appendChild(tick);
+        });
+
+        const chLabel = document.createElement('span');
+        chLabel.className = 'meter-ch';
+        chLabel.textContent = 'dB';
+
+        col.appendChild(scaleEl);
+        col.appendChild(chLabel);
+        pairEl.insertBefore(col, pairEl.firstChild);
+    };
+
+    // Level: rango -60..+6 dBFS, top% = (6 - db) / 66 * 100
+    const levelTicks = [0, -6, -12, -18, -24, -36, -48].map(db => ({
+        label: db === 0 ? '0' : String(db),
+        topPct: (6 - db) / 66 * 100,
+    }));
+
+    // GR: rango 0..24 dB de reducción, rellena desde arriba, top% = gr / 24 * 100
+    const grTicks = [0, 6, 12, 18, 24].map(gr => ({
+        label: String(gr),
+        topPct: gr / 24 * 100,
+    }));
+
+    addMeterScale(document.querySelector('[data-meter="inL"]').closest('.meter-pair'),  levelTicks);
+    addMeterScale(document.querySelector('[data-meter="grL"]').closest('.meter-pair'),  grTicks);
+    addMeterScale(document.querySelector('[data-meter="outL"]').closest('.meter-pair'), levelTicks);
+
     // --- VU meters ---
     const fills = {
         inL:  document.querySelector('[data-meter="inL"]  .meter-fill'),

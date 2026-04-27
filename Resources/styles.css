@@ -449,6 +449,57 @@ body {
     bottom: auto;
 }
 
+/* ---- Escala de referencia dB en los metros ---- */
+.meter-scale-col {
+    gap: 3px;
+}
+
+.meter-scale {
+    position: relative;
+    width: 26px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.scale-tick {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.scale-tick-label {
+    font-size: 7px;
+    font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+    text-align: right;
+    flex: 1 1 auto;
+}
+
+.scale-tick-line {
+    display: block;
+    width: 5px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+/* marca de 0 dB más visible */
+.scale-tick:first-child .scale-tick-label {
+    color: rgba(255, 184, 77, 0.75);
+}
+.scale-tick:first-child .scale-tick-line {
+    background: rgba(255, 184, 77, 0.5);
+    width: 7px;
+}
+
 /* ---- LCD de pico debajo de cada grupo de metros ---- */
 .lcd-meter-peak {
     width: 100%;
