@@ -329,23 +329,13 @@ body {
     color: var(--text-dim);
 }
 
-.knob-readout {
-    position: absolute;
-    left: 50%;
-    bottom: -14px;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 180ms ease;
-    white-space: nowrap;
+.knob-label {
+    transition: color 120ms ease;
 }
 
-.knob:hover .knob-readout,
-.knob.dragging .knob-readout {
-    opacity: 1;
+.knob-label--value {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
 }
 
 /* ---- meters panel ---- */
