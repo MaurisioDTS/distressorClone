@@ -51,6 +51,9 @@ std::make_unique<juce::AudioParameterChoice>("distortionModeParam","Distortion M
     addParameter(outputGain = new juce::AudioParameterFloat("outputGain", "Output Gain",
         juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f),
         0.0f));
+    addParameter(dryWet = new juce::AudioParameterFloat("dryWet", "Dry/Wet",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+        1.0f));
 }
 
 DistressorCloneAudioProcessor::~DistressorCloneAudioProcessor()
@@ -137,6 +140,12 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
 
     float inputGainLin = juce::Decibels::decibelsToGain(inputGainDb);
     float outGain = juce::Decibels::decibelsToGain(outputGain->get());
+    const float dryWetValue = dryWet->get(); // 0 = dry, 1 = wet
+
+    // Guardamos el buffer seco (sin procesar) para la mezcla dry/wet.
+    juce::AudioBuffer<float> dryBuffer;
+    if (dryWetValue < 0.9999f)
+        dryBuffer.makeCopyOf(buffer);
 
     buffer.applyGain(inputGainLin);
 
@@ -208,7 +217,19 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     //      never forget!
     buffer.applyGain(outGain);
 
-    // Peak de salida para el meter (despu�s del out gain).
+    // Mezcla dry/wet: 0 = solo dry (bypass), 1 = solo wet (procesado).
+    if (dryWetValue < 0.9999f)
+    {
+        for (int ch = 0; ch < numChannels; ++ch)
+        {
+            auto* wetData       = buffer.getWritePointer(ch);
+            const auto* dryData = dryBuffer.getReadPointer(ch);
+            for (int s = 0; s < numSamples; ++s)
+                wetData[s] = dryData[s] * (1.0f - dryWetValue) + wetData[s] * dryWetValue;
+        }
+    }
+
+    // Peak de salida para el meter (despues del dry/wet blend).
     {
         const float peakL = numChannels > 0 ? buffer.getMagnitude(0, 0, numSamples) : 0.0f;
         const float peakR = numChannels > 1 ? buffer.getMagnitude(1, 0, numSamples) : peakL;

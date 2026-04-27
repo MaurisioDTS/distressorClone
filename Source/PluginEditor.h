@@ -40,6 +40,7 @@ private:
     juce::WebSliderRelay   attackRelay     { "attack"     };
     juce::WebSliderRelay   releaseRelay    { "release"    };
     juce::WebSliderRelay   ratioRelay      { "ratio"      };
+    juce::WebSliderRelay   dryWetRelay     { "dryWet"     };
     juce::WebComboBoxRelay modeRelay       { "mode"       };
     juce::WebComboBoxRelay distModeRelay   { "distortionMode" };
 
@@ -51,6 +52,7 @@ private:
     std::unique_ptr<SliderAttachment> attackAttach;
     std::unique_ptr<SliderAttachment> releaseAttach;
     std::unique_ptr<SliderAttachment> ratioAttach;
+    std::unique_ptr<SliderAttachment> dryWetAttach;
     std::unique_ptr<ComboAttachment>  modeAttach;
     std::unique_ptr<ComboAttachment>  distModeAttach;
 
