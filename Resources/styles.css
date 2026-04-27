@@ -85,8 +85,10 @@ body {
 .body {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
     gap: 14px;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .panel {
@@ -327,37 +329,29 @@ body {
     color: var(--text-dim);
 }
 
-.knob-readout {
-    position: absolute;
-    left: 50%;
-    bottom: -14px;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 180ms ease;
-    white-space: nowrap;
+.knob-label {
+    transition: color 120ms ease;
 }
 
-.knob:hover .knob-readout,
-.knob.dragging .knob-readout {
-    opacity: 1;
+.knob-label--value {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
 }
 
 /* ---- meters panel ---- */
 .panel-meters {
     background: linear-gradient(145deg, var(--panel-meters) 0%, var(--panel-meters-edge) 100%);
-    flex: 1 1 auto;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .meters-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    height: calc(100% - 26px);
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 /* grupo: label de sección + par de barras */
@@ -443,4 +437,73 @@ body {
     background: var(--meter-gr);
     top: 0;
     bottom: auto;
+}
+
+/* ---- Escala de referencia dB en los metros ---- */
+.meter-scale-col {
+    gap: 3px;
+}
+
+.meter-scale {
+    position: relative;
+    width: 26px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.scale-tick {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.scale-tick-label {
+    font-size: 7px;
+    font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+    text-align: right;
+    flex: 1 1 auto;
+}
+
+.scale-tick-line {
+    display: block;
+    width: 5px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+/* marca de 0 dB más visible */
+.scale-tick:first-child .scale-tick-label {
+    color: rgba(255, 184, 77, 0.75);
+}
+.scale-tick:first-child .scale-tick-line {
+    background: rgba(255, 184, 77, 0.5);
+    width: 7px;
+}
+
+.meter-scale-spacer {
+    width: 26px;
+    flex-shrink: 0;
+}
+
+/* ---- LCD de pico debajo de cada grupo de metros ---- */
+.lcd-meter-peak {
+    width: 100%;
+    padding: 3px 6px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.lcd-meter-peak .lcd-value {
+    font-size: 11px;
+    letter-spacing: 0.5px;
 }

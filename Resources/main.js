@@ -34,6 +34,8 @@ class RotaryKnob {
         this.el = element;
         this.slider = sliderState;
         this.unit = unit;
+        this.hovering = false;
+        this.dragging = false;
 
         this.minAngle = -135; // grados
         this.maxAngle = 135;
@@ -48,12 +50,14 @@ class RotaryKnob {
                 <line class="indicator" x1="50" y1="50" x2="50" y2="30"
                       transform="rotate(${this.minAngle} 50 50)"/>
             </svg>
-            <span class="knob-readout">--</span>
         `;
 
         this.valueArc = this.el.querySelector(".value-arc");
         this.indicator = this.el.querySelector(".indicator");
-        this.readout = this.el.querySelector(".knob-readout");
+
+        // Label hermano fuera del knob — guardamos el texto original
+        this.label = this.el.closest(".knob-cell")?.querySelector(".knob-label") ?? null;
+        this.labelText = this.label?.textContent ?? "";
 
         this.slider.valueChangedEvent.addListener(() => this.refresh());
         this.slider.propertiesChangedEvent.addListener(() => this.refresh());
@@ -78,8 +82,21 @@ class RotaryKnob {
     }
 
     normalised() {
-        // SliderState expone el valor normalizado 0..1
         return this.slider.getNormalisedValue();
+    }
+
+    showValue() {
+        if (this.label) {
+            this.label.textContent = formatValue(this.slider.getScaledValue(), this.unit);
+            this.label.classList.add("knob-label--value");
+        }
+    }
+
+    restoreLabel() {
+        if (this.label) {
+            this.label.textContent = this.labelText;
+            this.label.classList.remove("knob-label--value");
+        }
     }
 
     refresh() {
@@ -87,17 +104,26 @@ class RotaryKnob {
         const angle = this.minAngle + n * (this.maxAngle - this.minAngle);
         this.valueArc.setAttribute("d", this.arcPath(this.minAngle, angle));
         this.indicator.setAttribute("transform", `rotate(${angle} 50 50)`);
-        this.readout.textContent = formatValue(this.slider.getScaledValue(), this.unit);
+        if (this.hovering || this.dragging) this.showValue();
     }
 
     attachMouseHandlers() {
-        let dragging = false;
         let startY = 0;
         let startValue = 0;
 
+        this.el.addEventListener("mouseenter", () => {
+            this.hovering = true;
+            this.showValue();
+        });
+
+        this.el.addEventListener("mouseleave", () => {
+            this.hovering = false;
+            if (!this.dragging) this.restoreLabel();
+        });
+
         const beginDrag = (e) => {
             e.preventDefault();
-            dragging = true;
+            this.dragging = true;
             startY = e.clientY ?? (e.touches && e.touches[0].clientY) ?? 0;
             startValue = this.normalised();
             this.el.classList.add("dragging");
@@ -107,7 +133,7 @@ class RotaryKnob {
         };
 
         const onMove = (e) => {
-            if (!dragging) return;
+            if (!this.dragging) return;
             const y = e.clientY ?? (e.touches && e.touches[0].clientY) ?? startY;
             const dy = startY - y; // arriba = positivo
             // sensibilidad: 200 px de recorrido = rango completo
@@ -118,19 +144,16 @@ class RotaryKnob {
         };
 
         const endDrag = () => {
-            if (!dragging) return;
-            dragging = false;
+            if (!this.dragging) return;
+            this.dragging = false;
             this.el.classList.remove("dragging");
             this.slider.sliderDragEnded();
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", endDrag);
+            if (!this.hovering) this.restoreLabel();
         };
 
         const onDoubleClick = () => {
-            // Doble clic: reset al default (asumimos 0 normalizado equivale a min;
-            // no tenemos el default aqui, pero lo dejamos estable).
-            // En JUCE el default suele estar reflejado en getScaledValue al cargar.
-            // Aqui volvemos al centro del rango como heuristica.
             this.slider.sliderDragStarted();
             this.slider.setNormalisedValue(0.5);
             this.slider.sliderDragEnded();
@@ -263,6 +286,50 @@ const bootstrap = () => {
         Juce.getComboBoxState("mode")
     );
 
+    // --- Escalas de los metros ---
+    const addMeterScale = (pairEl, ticks) => {
+        const col = document.createElement('div');
+        col.className = 'meter-col meter-scale-col';
+
+        const scaleEl = document.createElement('div');
+        scaleEl.className = 'meter-scale';
+
+        ticks.forEach(({ label, topPct }) => {
+            const tick = document.createElement('div');
+            tick.className = 'scale-tick';
+            tick.style.top = topPct + '%';
+            tick.innerHTML =
+                `<span class="scale-tick-label">${label}</span>` +
+                `<span class="scale-tick-line"></span>`;
+            scaleEl.appendChild(tick);
+        });
+
+        col.appendChild(scaleEl);
+        pairEl.insertBefore(col, pairEl.firstChild);
+
+        // Espaciador simétrico a la derecha para mantener las barras centradas
+        const spacer = document.createElement('div');
+        spacer.className = 'meter-scale-spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        pairEl.appendChild(spacer);
+    };
+
+    // Level: rango -60..+6 dBFS, top% = (6 - db) / 66 * 100
+    const levelTicks = [0, -6, -12, -18, -24, -36, -48].map(db => ({
+        label: db === 0 ? '0' : String(db),
+        topPct: (6 - db) / 66 * 100,
+    }));
+
+    // GR: rango 0..24 dB de reducción, rellena desde arriba, top% = gr / 24 * 100
+    const grTicks = [0, 6, 12, 18].map(gr => ({
+        label: String(gr),
+        topPct: gr / 24 * 100,
+    }));
+
+    addMeterScale(document.querySelector('[data-meter="inL"]').closest('.meter-pair'),  levelTicks);
+    addMeterScale(document.querySelector('[data-meter="grL"]').closest('.meter-pair'),  grTicks);
+    addMeterScale(document.querySelector('[data-meter="outL"]').closest('.meter-pair'), levelTicks);
+
     // --- VU meters ---
     const fills = {
         inL:  document.querySelector('[data-meter="inL"]  .meter-fill'),
@@ -273,13 +340,10 @@ const bootstrap = () => {
         grR:  document.querySelector('[data-meter="grR"]  .meter-fill'),
     };
 
-    const labels = {
-        inL:  document.querySelector('[data-dbfs="inL"]'),
-        inR:  document.querySelector('[data-dbfs="inR"]'),
-        outL: document.querySelector('[data-dbfs="outL"]'),
-        outR: document.querySelector('[data-dbfs="outR"]'),
-        grL:  document.querySelector('[data-dbfs="grL"]'),
-        grR:  document.querySelector('[data-dbfs="grR"]'),
+    const lcdPeaks = {
+        in:  document.querySelector('[data-meter-lcd="in"]  .lcd-value'),
+        gr:  document.querySelector('[data-meter-lcd="gr"]  .lcd-value'),
+        out: document.querySelector('[data-meter-lcd="out"] .lcd-value'),
     };
 
     // dB (-60..+6) → porcentaje de barra (0..100)
@@ -299,7 +363,6 @@ const bootstrap = () => {
         const set = (key, db) => {
             if (typeof db !== "number") return;
             fills[key].style.height = dbToPercent(db) + "%";
-            labels[key].textContent = fmtDb(db);
         };
 
         set("inL",  payload.inL);
@@ -307,16 +370,36 @@ const bootstrap = () => {
         set("outL", payload.outL);
         set("outR", payload.outR);
 
+        // LCD peak In: valor más alto del par L/R
+        const peakIn = Math.max(
+            typeof payload.inL === "number" ? payload.inL : -Infinity,
+            typeof payload.inR === "number" ? payload.inR : -Infinity
+        );
+        if (isFinite(peakIn)) lcdPeaks.in.textContent = fmtDb(peakIn);
+
+        // LCD peak Out: valor más alto del par L/R
+        const peakOut = Math.max(
+            typeof payload.outL === "number" ? payload.outL : -Infinity,
+            typeof payload.outR === "number" ? payload.outR : -Infinity
+        );
+        if (isFinite(peakOut)) lcdPeaks.out.textContent = fmtDb(peakOut);
+
         // grL = canal L en Unlink / Mid en M/S / valor comun en Link
         // grR = canal R en Unlink / Side en M/S / valor comun en Link
         const setGr = (key, grDb) => {
             if (typeof grDb !== "number") return;
             const pct = Math.max(0, Math.min(1, grDb / 24)) * 100;
-            fills[key].style.height  = pct + "%";
-            labels[key].textContent  = grDb > 0.05 ? "-" + grDb.toFixed(1) : "0.0";
+            fills[key].style.height = pct + "%";
         };
         setGr("grL", payload.grL);
         setGr("grR", payload.grR);
+
+        // LCD peak GR: mayor reducción de ganancia del par L/R
+        const peakGr = Math.max(
+            typeof payload.grL === "number" ? payload.grL : 0,
+            typeof payload.grR === "number" ? payload.grR : 0
+        );
+        lcdPeaks.gr.textContent = peakGr > 0.05 ? "-" + peakGr.toFixed(1) : "0.0";
     });
 };
 
