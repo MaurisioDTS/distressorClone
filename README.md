@@ -2,7 +2,6 @@
 
 *clon del Empirical Labs Distressor EL8, hecho en C++ con JUCE.*
 
-<<<<<<< HEAD
 ![el plugin](https://github.com/user-attachments/assets/ce82e9b4-7be7-46de-9174-3aa30965bcc6)
 
 ## esto pa k es
