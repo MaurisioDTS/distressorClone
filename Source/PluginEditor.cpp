@@ -57,7 +57,8 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
                    .withOptionsFrom (ratioRelay)
                    .withOptionsFrom (dryWetRelay)
                    .withOptionsFrom (modeRelay)
-                   .withOptionsFrom (distModeRelay))
+                   .withOptionsFrom (distModeRelay)
+                   .withOptionsFrom (hpFreqRelay))
 {
     // Enlazamos cada relay a su RangedAudioParameter correspondiente.
     auto attachSlider = [this] (juce::WebSliderRelay& relay, const juce::String& paramID)
@@ -86,6 +87,7 @@ DistressorCloneAudioProcessorEditor::DistressorCloneAudioProcessorEditor (Distre
     dryWetAttach     = attachSlider (dryWetRelay,     "dryWet");
     modeAttach       = attachCombo  (modeRelay,       "mode");
     distModeAttach   = attachCombo  (distModeRelay,   "distortionMode");
+    hpFreqAttach     = attachCombo  (hpFreqRelay,     "hpFreq");
 
     addAndMakeVisible (webView);
     webView.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());

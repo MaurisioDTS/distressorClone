@@ -114,6 +114,7 @@ private:
 
     juce::AudioParameterChoice* compModeParam;
     juce::AudioParameterChoice* distModeParam;
+    juce::AudioParameterChoice* hpFreqParam;   // hi-pass del detector (Off / 60 / 80 / ...)
 
     float linkedEnvelopeDb = 0.0f;  // detector com�n para modo "Link"
     float midEnvDb = 0.0f;          // detector Mid
@@ -126,12 +127,17 @@ private:
 
     void updateEnvelopeCoefficients();   // recalcula attack/release coeffs
     float computeGainFromLevel(float inputLevelDb, float threshDb, float ratio);
-    float Compressor(float inputSample, int channel);
-    float LinkComp(float inputSample);
+    // detectorSample = senal que alimenta al detector (puede venir hi-pass-filtrada);
+    // inputSample    = senal sobre la que se aplica la reduccion de ganancia.
+    float Compressor(float inputSample, float detectorSample, int channel);
+    float LinkComp(float detectorSample);
 
-    float postCompFxChain(float inputSample);
     float thDistortion(float inputSample);
-    float hiPassFilter(float inputSample);
+
+    // Hi-pass del detector/sidechain (no filtra el audio, solo lo que "escucha"
+    // el compresor, igual que el filtro del detector del hardware).
+    float getHpFreqHz() const;          // 0 = Off
+    juce::dsp::StateVariableTPTFilter<float> sidechainHpFilter;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DistressorCloneAudioProcessor)

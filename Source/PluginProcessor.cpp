@@ -46,7 +46,10 @@ std::make_unique<juce::AudioParameterChoice>("distortionModeParam","Distortion M
         juce::StringArray{ "Unlink", "Link", "M/S" },
         1));
     addParameter(distModeParam = new juce::AudioParameterChoice("distortionMode","Distortion Mode",
-        juce::StringArray{ "Normal", "Dist 2", "Dist 3" },
+        juce::StringArray{ "Off", "Normal", "Dist 2", "Dist 3" },
+        0));
+    addParameter(hpFreqParam = new juce::AudioParameterChoice("hpFreq", "Detector Hi-Pass",
+        juce::StringArray{ "Off", "60", "80", "120", "160", "250" },
         0));
     addParameter(outputGain = new juce::AudioParameterFloat("outputGain", "Output Gain",
         juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f),
@@ -76,6 +79,16 @@ void DistressorCloneAudioProcessor::prepareToPlay (double newSampleRate, int sam
 
     oversampling.reset();
     oversampling.initProcessing(samplesPerBlock);
+
+    // Filtro hi-pass del detector (sidechain). Procesamos muestra a muestra dentro
+    // de los bucles, asi que solo necesitamos prepararlo y fijar el tipo.
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate       = newSampleRate;
+    spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
+    spec.numChannels      = (juce::uint32) juce::jmax(1, getTotalNumOutputChannels());
+    sidechainHpFilter.prepare(spec);
+    sidechainHpFilter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+    sidechainHpFilter.reset();
 }
 
 void DistressorCloneAudioProcessor::updateEnvelopeCoefficients()
@@ -157,19 +170,37 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         inputPeakDbR.store(juce::Decibels::gainToDecibels(peakR, -100.0f));
     }
 
+    // Hi-pass del detector (sidechain): no filtra el audio, solo la senal que
+    // alimenta al detector del compresor (igual que el filtro del detector del HW).
+    const float hpFreqHz = getHpFreqHz();
+    const bool  hpOn     = hpFreqHz > 0.0f;
+    if (hpOn)
+        sidechainHpFilter.setCutoffFrequency(hpFreqHz);
+
+    // Devuelve la muestra del detector para un canal: filtrada si el HP esta activo.
+    // OJO: processSample avanza el estado del filtro, hay que llamarlo exactamente
+    // una vez por canal y muestra.
+    auto detector = [this, hpOn](int ch, float s) -> float
+    {
+        return hpOn ? sidechainHpFilter.processSample(ch, s) : s;
+    };
+
     // Procesamiento principal: un unico if/else if/else (antes habia un bug
     // donde mode==1 caia tambien en el else de mode==2 y se procesaba 2 veces).
     if (mode == 1) // Link: detector comun, mismo gain a todos los canales
     {
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            // detector com�n: max entre todos los canales
-            float maxIn = 0.0f;
+            // detector com�n: max entre todos los canales (sobre la senal del detector)
+            float maxDet = 0.0f;
             for (int ch = 0; ch < numChannels; ++ch)
-                maxIn = std::max(maxIn, std::fabs(buffer.getSample(ch, sample)));
+            {
+                float det = detector(ch, buffer.getSample(ch, sample));
+                maxDet = std::max(maxDet, std::fabs(det));
+            }
 
             // aplicar reducci�n com�n
-            float gain = LinkComp(maxIn);
+            float gain = LinkComp(maxDet);
 
             for (int ch = 0; ch < numChannels; ++ch)
                 buffer.setSample(ch, sample, buffer.getSample(ch, sample) * gain);
@@ -187,8 +218,8 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
             float Side = (L - R) * 0.7071f;
 
             // procesar por separado (canal 0 -> Mid, canal 1 -> Side)
-            float MidOut  = Compressor(Mid,  0);
-            float SideOut = Compressor(Side, 1);
+            float MidOut  = Compressor(Mid,  detector(0, Mid),  0);
+            float SideOut = Compressor(Side, detector(1, Side), 1);
 
             // volver a L/R
             float newL = (MidOut + SideOut) * 0.7071f;
@@ -205,9 +236,21 @@ void DistressorCloneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
             for (int ch = 0; ch < numChannels; ++ch)
             {
                 float in  = buffer.getSample(ch, sample);
-                float out = postCompFxChain(Compressor(in, ch)); // efectos en serie
+                float out = Compressor(in, detector(ch, in), ch);
                 buffer.setSample(ch, sample, out);
             }
+        }
+    }
+
+    // Distorsion en serie despues del compresor. Se aplica en TODOS los modos del
+    // compresor (Unlink/Link/M/S). El modo de distorsion 0 ("Off") la desactiva.
+    if (distModeParam->getIndex() != 0)
+    {
+        for (int ch = 0; ch < numChannels; ++ch)
+        {
+            auto* data = buffer.getWritePointer(ch);
+            for (int s = 0; s < numSamples; ++s)
+                data[s] = thDistortion(data[s]);
         }
     }
 
@@ -294,13 +337,14 @@ float DistressorCloneAudioProcessor::computeGainFromLevel(float inputLevelDb, fl
     return gainReductionDb; // normalmente negativo o 0
 }
 
-float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
+float DistressorCloneAudioProcessor::Compressor(float inputSample, float detectorSample, int channel)
 {
     float thresh = this->threshold; // -24dB
     float ratio  = this->ratio->get();
 
-    // 1. Convertir a dBFS (siempre con valor absoluto)
-    float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(inputSample) + 1.0e-10f);
+    // 1. Convertir a dBFS (siempre con valor absoluto). El nivel se mide sobre la
+    //    senal del DETECTOR (posiblemente hi-pass filtrada), no sobre el audio.
+    float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(detectorSample) + 1.0e-10f);
 
     // 2. Calculo de la GR estatica (curva con knee).
     //    computeGainFromLevel ya devuelve 0 cuando la senal esta por debajo del knee,
@@ -324,12 +368,13 @@ float DistressorCloneAudioProcessor::Compressor(float inputSample, int channel)
     return inputSample * juce::Decibels::decibelsToGain(envelopeDb[channel]);
 }
 
-float DistressorCloneAudioProcessor::LinkComp(float inputSample)
+float DistressorCloneAudioProcessor::LinkComp(float detectorSample)
 {
     float thresh = this->threshold;
     float ratio  = this->ratio->get();
 
-    float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(inputSample) + 1.0e-10f);
+    // nivel medido sobre la senal del detector (posiblemente hi-pass filtrada)
+    float inputLevelDb = juce::Decibels::gainToDecibels(std::fabs(detectorSample) + 1.0e-10f);
 
     // Misma logica que Compressor: llamar siempre para no perder el knee inferior.
     float gainReductionDb = computeGainFromLevel(inputLevelDb, thresh, ratio);
@@ -349,15 +394,13 @@ float DistressorCloneAudioProcessor::LinkComp(float inputSample)
 
 float DistressorCloneAudioProcessor::thDistortion(float inputSample)
 {
-    // TODO hay que programar el bypass del distorsionador.
-    if (false) return(inputSample);
-
+    // El modo 0 ("Off") es bypass y no entra aqui (se filtra en processBlock).
     int mode = distModeParam->getIndex();
     float x = inputSample;
 
     switch (mode)
     {
-    case 0: //  Normal (Clean / Soft Clip)
+    case 1: //  Normal (Clean / Soft Clip)
     {
         // Soft clipper muy suave, casi transparente
         // Evita overs sin a�adir volumen extra
@@ -367,7 +410,7 @@ float DistressorCloneAudioProcessor::thDistortion(float inputSample)
         else                  return x;
     }
 
-    case 1: //  Dist 2 (Tube-like, arm�nicos pares)
+    case 2: //  Dist 2 (Tube-like, arm�nicos pares)
     {
         // Saturaci�n tipo v�lvula: tanh + cuadr�tica (2� arm�nico)
         float nonlinear = std::tanh(1.3f * x);
@@ -375,7 +418,7 @@ float DistressorCloneAudioProcessor::thDistortion(float inputSample)
         return juce::jlimit(-1.0f, 1.0f, nonlinear);
     }
 
-    case 2: //  Dist 3 (Tape-like, arm�nicos impares)
+    case 3: //  Dist 3 (Tape-like, arm�nicos impares)
     {
         // Saturaci�n de cinta: compresi�n + arm�nicos impares
         float cubic = x - 0.7f * (std::pow(x, 3) - 0.35f * std::pow(x, 2));
@@ -388,16 +431,19 @@ float DistressorCloneAudioProcessor::thDistortion(float inputSample)
     }
 }
 
-float DistressorCloneAudioProcessor::hiPassFilter(float inputSample) {
-    // TODO programar el hp filter.
-    if (false) return inputSample;
-    return inputSample;
-}
-
-float DistressorCloneAudioProcessor::postCompFxChain(float inputSample)
+float DistressorCloneAudioProcessor::getHpFreqHz() const
 {
-    //  huele espantoso? si. funciona? si.
-    return hiPassFilter(thDistortion(inputSample));
+    // Indices: 0=Off, 1=60, 2=80, 3=120, 4=160, 5=250 (deben coincidir con el
+    // StringArray del parametro hpFreq y con el mapeo del front-end).
+    switch (hpFreqParam->getIndex())
+    {
+        case 1: return 60.0f;
+        case 2: return 80.0f;
+        case 3: return 120.0f;
+        case 4: return 160.0f;
+        case 5: return 250.0f;
+        default: return 0.0f; // Off
+    }
 }
 
 //==============================================================================

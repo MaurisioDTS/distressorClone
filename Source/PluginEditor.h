@@ -43,6 +43,7 @@ private:
     juce::WebSliderRelay   dryWetRelay     { "dryWet"     };
     juce::WebComboBoxRelay modeRelay       { "mode"       };
     juce::WebComboBoxRelay distModeRelay   { "distortionMode" };
+    juce::WebComboBoxRelay hpFreqRelay     { "hpFreq"     };
 
     juce::WebBrowserComponent webView;
 
@@ -55,6 +56,7 @@ private:
     std::unique_ptr<SliderAttachment> dryWetAttach;
     std::unique_ptr<ComboAttachment>  modeAttach;
     std::unique_ptr<ComboAttachment>  distModeAttach;
+    std::unique_ptr<ComboAttachment>  hpFreqAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DistressorCloneAudioProcessorEditor)
 };
