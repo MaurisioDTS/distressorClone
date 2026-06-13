@@ -252,6 +252,79 @@ class RatioCycleControl {
 }
 
 // ------------------------------------------------------------------
+//  Hi-pass del detector: pantallita con curva (roja) + ciclo de presets
+// ------------------------------------------------------------------
+
+// Geometria de la pantallita (debe coincidir con el viewBox del SVG en el HTML)
+const HP_VB_W = 120;
+const HP_F_MIN = 20;     // Hz al borde izquierdo
+const HP_F_MAX = 2000;   // Hz al borde derecho
+const HP_DB_TOP = 2;     // dB en la parte alta del trazo
+const HP_DB_BOT = -30;   // dB en el suelo del trazo
+const HP_Y_TOP = 6;
+const HP_Y_BOT = 42;
+
+const hpDbToY = (db) => {
+    const clamped = Math.max(HP_DB_BOT, Math.min(HP_DB_TOP, db));
+    const t = (HP_DB_TOP - clamped) / (HP_DB_TOP - HP_DB_BOT);
+    return HP_Y_TOP + t * (HP_Y_BOT - HP_Y_TOP);
+};
+
+// Magnitud de un hi-pass Butterworth de 2do orden en dB.
+const hpMagnitudeDb = (f, fc) => {
+    if (fc <= 0) return 0; // Off => respuesta plana
+    const r = f / fc;
+    const mag = (r * r) / Math.sqrt(1 + Math.pow(r, 4));
+    return 20 * Math.log10(Math.max(mag, 1e-6));
+};
+
+const hpCurvePath = (fc) => {
+    const N = 56;
+    let d = "";
+    for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const f = HP_F_MIN * Math.pow(HP_F_MAX / HP_F_MIN, t);
+        const x = (t * HP_VB_W).toFixed(2);
+        const y = hpDbToY(hpMagnitudeDb(f, fc)).toFixed(2);
+        d += (i === 0 ? "M" : "L") + x + " " + y + " ";
+    }
+    return d.trim();
+};
+
+class HiPassControl {
+    constructor(button, freqEl, curvePathEl, comboState) {
+        this.button = button;
+        this.freqEl = freqEl;
+        this.path = curvePathEl;
+        this.combo = comboState;
+
+        this.combo.propertiesChangedEvent.addListener(() => this.refresh());
+        this.combo.valueChangedEvent.addListener(() => this.refresh());
+
+        this.button.addEventListener("click", () => this.cycleNext());
+        this.refresh();
+    }
+
+    cycleNext() {
+        const choices = this.combo.properties.choices || [];
+        if (choices.length === 0) return;
+        const next = (this.combo.getChoiceIndex() + 1) % choices.length;
+        this.combo.setChoiceIndex(next);
+    }
+
+    refresh() {
+        const choices = this.combo.properties.choices || [];
+        const idx = this.combo.getChoiceIndex();
+        const label = choices[idx] ?? "Off";
+        const isOff = label.toLowerCase() === "off" || label === "--";
+
+        this.freqEl.textContent = isOff ? "Off" : `${label} Hz`;
+        const fc = isOff ? 0 : parseFloat(label);
+        this.path.setAttribute("d", hpCurvePath(isFinite(fc) ? fc : 0));
+    }
+}
+
+// ------------------------------------------------------------------
 //  Inicializacion cuando __JUCE__ esta listo
 // ------------------------------------------------------------------
 
@@ -285,6 +358,14 @@ const bootstrap = () => {
         document.getElementById("modeCycleBtn"),
         sectionValue("mode"),
         Juce.getComboBoxState("mode")
+    );
+
+    // --- Hi-pass del detector: pantallita con curva + ciclo de presets ---
+    new HiPassControl(
+        document.getElementById("hpCycleBtn"),
+        document.getElementById("hpFreqValue"),
+        document.querySelector("#hpDisplay .hp-curve-line"),
+        Juce.getComboBoxState("hpFreq")
     );
 
     // --- Escalas de los metros ---

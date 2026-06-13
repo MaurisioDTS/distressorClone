@@ -42,6 +42,26 @@
                     <button class="pill-btn cycle-btn" id="modeCycleBtn"       type="button">Detection</button>
                 </div>
 
+                <div class="controls-divider"></div>
+
+                <div class="hp-section">
+                    <div class="hp-row">
+                        <div class="lcd lcd--red hp-display" id="hpDisplay">
+                            <div class="hp-graph">
+                                <svg class="hp-curve" viewBox="0 0 120 44" preserveAspectRatio="none">
+                                    <line class="hp-axis" x1="0" y1="8" x2="120" y2="8" />
+                                    <path class="hp-curve-line" d="" />
+                                </svg>
+                            </div>
+                            <div class="lcd-divider"></div>
+                            <div class="hp-state">
+                                <span class="hp-freq" id="hpFreqValue">Off</span>
+                            </div>
+                        </div>
+                        <button class="pill-btn cycle-btn hp-cycle-btn" id="hpCycleBtn" type="button">Hi-Pass</button>
+                    </div>
+                </div>
+
             </section>
 
             <section class="panel panel-knobs">
